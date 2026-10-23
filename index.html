@@ -3,15 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="AI Korepetitorius — moderni mokymosi platforma su penkiais specializuotais AI asistentais.">
-<title>AI Korepetitorius</title>
+<meta name="description" content="Studio AI — moderni mokymosi platforma su penkiais specializuotais AI asistentais.">
+<title>Studio AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* =========================================================
-   1. DESIGN TOKENS (visi kintamieji ant :root — kad veiktų
-   ir modalai, ir toastai, ir bet kuris elementas)
+   1. DESIGN TOKENS
    ========================================================= */
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -33,7 +32,6 @@
 
   --content-max: 860px;
 
-  /* Akcentas — keičiamas JS per modelio pasirinkimą */
   --accent: #8b5cf6;
   --accent-rgb: 139, 92, 246;
   --accent-2: #6d28d9;
@@ -238,11 +236,17 @@ svg { display: block; flex-shrink: 0; }
 .sidebar-collapse:hover { background: var(--hover); color: var(--text); }
 .sidebar-collapse svg { transition: transform var(--dur) var(--ease); }
 
-/* Kol sulenkta — mygtukas LIEKA matomas (centruotas) */
+/* Suskleistos šoninės juostos stilius — VISKAS CENTRUOJAMA */
 .app.sidebar-collapsed .brand-text { opacity: 0; width: 0; pointer-events: none; }
-.app.sidebar-collapsed .brand { justify-content: center; }
-.app.sidebar-collapsed .sidebar-header { justify-content: center; padding: 14px 8px; }
-.app.sidebar-collapsed .sidebar-collapse svg { transform: rotate(180deg); }
+.app.sidebar-collapsed .sidebar-header {
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 8px;
+}
+.app.sidebar-collapsed .brand { justify-content: center; width: 100%; }
+.app.sidebar-collapsed .sidebar-collapse { transform: rotate(180deg); }
+.app.sidebar-collapsed .sidebar-collapse svg { transform: none; }
 
 .sidebar-body {
   flex: 1;
@@ -265,10 +269,10 @@ svg { display: block; flex-shrink: 0; }
   overflow: hidden;
   transition: opacity var(--dur) var(--ease);
 }
-.app.sidebar-collapsed .sidebar-section-label { opacity: 0; height: 20px; padding: 4px 0; overflow: hidden; }
+.app.sidebar-collapsed .sidebar-section-label { opacity: 0; height: 16px; padding: 4px 0; overflow: hidden; }
 .app.sidebar-collapsed .sidebar-body { padding: 10px 8px 0; }
 
-.model-list { display: flex; flex-direction: column; gap: 3px; }
+.model-list { display: flex; flex-direction: column; gap: 4px; width: 100%; }
 .model-item {
   display: flex;
   align-items: center;
@@ -312,6 +316,7 @@ svg { display: block; flex-shrink: 0; }
   color: #fff;
   letter-spacing: -0.02em;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  margin: 0 auto;
 }
 .model-avatar.lg { width: 36px; height: 36px; border-radius: 10px; font-size: 14px; }
 .model-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
@@ -331,7 +336,11 @@ svg { display: block; flex-shrink: 0; }
   text-overflow: ellipsis;
 }
 .app.sidebar-collapsed .model-info { display: none; }
-.app.sidebar-collapsed .model-item { justify-content: center; padding: 9px 0; }
+.app.sidebar-collapsed .model-item {
+  justify-content: center;
+  padding: 10px 0;
+  width: 100%;
+}
 .app.sidebar-collapsed .model-item.active::before { display: none; }
 
 .chat-actions { display: flex; gap: 6px; padding: 2px 4px 8px; }
@@ -428,7 +437,7 @@ svg { display: block; flex-shrink: 0; }
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 .sf-btn {
   display: flex;
@@ -445,7 +454,12 @@ svg { display: block; flex-shrink: 0; }
   white-space: nowrap;
 }
 .sf-btn:hover { background: var(--hover); color: var(--text); }
-.app.sidebar-collapsed .sf-btn { justify-content: center; padding: 9px 0; }
+.app.sidebar-collapsed .sidebar-footer { padding: 10px 0; align-items: center; }
+.app.sidebar-collapsed .sf-btn {
+  justify-content: center;
+  padding: 10px 0;
+  width: 100%;
+}
 .app.sidebar-collapsed .sf-btn span { display: none; }
 
 /* =========================================================
@@ -1382,6 +1396,7 @@ svg { display: block; flex-shrink: 0; }
   .app.sidebar-collapsed .sidebar-body { padding: 10px 10px 0; }
   .app.sidebar-collapsed .sidebar-section-label { opacity: 1; height: auto; padding: 12px 10px 6px; }
   .app.sidebar-collapsed .chat-empty { display: block; }
+  .app.sidebar-collapsed .sidebar-header { flex-direction: row; padding: 14px; }
 }
 
 @media (max-width: 640px) {
@@ -1428,7 +1443,7 @@ img, pre, table, .code-block { max-width: 100%; }
           </svg>
         </div>
         <div class="brand-text">
-          <b>AI Korepetitorius</b>
+          <b>Studio AI</b>
           <span>Mokymosi platforma</span>
         </div>
       </div>
@@ -1524,32 +1539,30 @@ img, pre, table, .code-block { max-width: 100%; }
 
 <script>
 /* =========================================================================
-   AI KOREPETITORIUS — pilnas funkcionalumas su OpenRouter / Ollama / Demo
+   STUDIO AI — pilnas funkcionalumas su OpenRouter / Ollama / Demo
    ========================================================================= */
 'use strict';
 
 /* -------------------------------------------------------------------------
    1. KONFIGŪRACIJA
    ------------------------------------------------------------------------- */
-// ⚠️ DĖMESIO: Šis raktas yra VIEŠAS (paskelbtas pokalbyje).
-// Atšauk jį https://openrouter.ai/keys ir įklijuok naują per Nustatymus.
 const DEFAULT_API_KEY = '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';
 
 const DEFAULT_SETTINGS = {
   theme: 'dark',
   sidebarCollapsed: false,
   reduceMotion: false,
-  provider: 'openrouter', // 'openrouter' | 'ollama' | 'demo'
+  provider: 'openrouter',
   apiKey: DEFAULT_API_KEY,
-  openrouterModel: 'liquid/lfm-2.5-2.6b:free',
+  openrouterModel: 'meta-llama/llama-3.2-3b-instruct:free',
   ollamaUrl: 'http://localhost:11434',
   ollamaModel: 'llama3.2',
 };
 
 const STORAGE = {
-  chats: 'aitutor.chats.v2',
-  settings: 'aitutor.settings.v2',
-  seeded: 'aitutor.seeded.v2',
+  chats: 'studioai.chats.v1',
+  settings: 'studioai.settings.v1',
+  seeded: 'studioai.seeded.v1',
 };
 
 /* -------------------------------------------------------------------------
@@ -1603,7 +1616,7 @@ function catIcon(name, size = 22) {
 }
 
 /* -------------------------------------------------------------------------
-   3. MODELIAI (su systeminiais promptais API kvietimams)
+   3. MODELIAI (Sugriežtinti sisteminiai promptai)
    ------------------------------------------------------------------------- */
 const MODELS = {
   atlas: {
@@ -1612,7 +1625,7 @@ const MODELS = {
     welcome: 'Padėsiu suprasti matematiką ir logiką — nuo paprastų lygčių iki sudėtingų įrodymų.',
     accent: '#8b5cf6', accentRgb: '139,92,246', accent2: '#6d28d9',
     gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-    systemPrompt: 'Tu esi Atlas — AI matematikos ir logikos korepetitorius, dirbantis lietuvių kalba. Atsakyk aiškiai, žingsnis po žingsnio. Naudok Markdown formatavimą. Matematinius veiksmus pateik kodo blokuose arba su $$...$$. Būk kantrus, mokomasis, skatink mokinį galvoti pačiam. Niekada nesakyk, kad esi ChatGPT ar kitas modelis — esi Atlas. Atsakymai turi būti lietuviški.',
+    systemPrompt: 'Tu esi Atlas — AI matematikos ir logikos korepetitorius. Atsakyk TIK į matematikos, logikos, statistikos ir geometrijos klausimus. NIEKADA nekoduok programavimo pavyzdžių (pvz., JavaScript, Python), išskyrus atvejus, kai tai būtina matematinei formulei ar skaičiavimo algoritmui pavaizduoti pseudokodu. Jei vartotojas klausia apie programavimą, mandagiai pasakyk, kad tai ne tavo specialybė, ir pasiūlyk pasirinkti Vega (programavimo korepetitorę). Atsakyk lietuvių kalba. Naudok Markdown formatavimą. Matematinius veiksmus pateik kodo blokuose arba su $$...$$. Būk kantrus, mokomasis, skatink mokinį galvoti pačiam. Niekada nesakyk, kad esi ChatGPT ar kitas modelis — esi Atlas.',
     categories: [
       { icon: 'sigma', title: 'Algebra', desc: 'Lygtys, funkcijos, daugianariai' },
       { icon: 'triangle', title: 'Geometrija', desc: 'Figūros, plotai, tūriai' },
@@ -1631,7 +1644,7 @@ const MODELS = {
     welcome: 'Padėsiu tobulinti rašymą, gramatiką ir literatūros supratimą.',
     accent: '#ec4899', accentRgb: '236,72,153', accent2: '#be185d',
     gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
-    systemPrompt: 'Tu esi Nova — AI lietuvių kalbos ir rašymo korepetitorė. Atsakyk lietuvių kalba. Padėk su rašiniais, gramatika, literatūra, stiliumi. Naudok Markdown. Būk draugiška, bet reikli. Niekada nesakyk, kad esi ChatGPT — esi Nova.',
+    systemPrompt: 'Tu esi Nova — AI lietuvių kalbos ir rašymo korepetitorė. Atsakyk TIK į kalbos, rašymo, gramatikos ir literatūros klausimus. Nekalbėk apie matematiką ar programavimą. Atsakyk lietuvių kalba. Naudok Markdown. Būk draugiška, bet reikli. Niekada nesakyk, kad esi ChatGPT — esi Nova.',
     categories: [
       { icon: 'pen', title: 'Rašiniai', desc: 'Struktūra, argumentai, įžanga' },
       { icon: 'book', title: 'Gramatika', desc: 'Linksniai, skyryba, sintaksė' },
@@ -1641,7 +1654,6 @@ const MODELS = {
     quick: ['Kaip parašyti gerą rašinį?', 'Paaiškink lietuvių kalbos linksnius', 'Padėk su literatūros analize'],
     demoResponses: [
       'Geras tekstas prasideda nuo **vienos aiškios minties**.\n\n**Struktūra:**\n- **Įžanga** – vienas sakinys, kuris sudomina.\n- **Dėstymas** – 2–3 pastraipos, kiekviena su viena idėja.\n- **Išvada** – vienas sakinys, apibendrinantis viską.\n\nParašyk savo įžangą – padėsiu ją patobulinti.',
-      'Rašinyje venk šių dalykų:\n\n- per ilgų, painių sakinių;\n- šnekamosios kalbos („tipo“, „nu“, „kažkaip“);\n- per daug epitetų viename sakinyje.\n\nO štai trys posakiai, kurie sustiprins tavo tekstą: *„visų pirma“*, *„kita vertus“*, *„todėl galima teigti“*.',
     ],
   },
   orion: {
@@ -1650,7 +1662,7 @@ const MODELS = {
     welcome: 'Paaiškinsiu fizikos ir chemijos reiškinius paprastai ir tiksliai.',
     accent: '#06b6d4', accentRgb: '6,182,212', accent2: '#0891b2',
     gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)',
-    systemPrompt: 'Tu esi Orion — AI fizikos ir chemijos korepetitorius. Atsakyk lietuvių kalba. Naudok Markdown, formules pateik su $$...$$ arba kodo blokuose. Aiškink reiškinius per priežastis ir pasekmes. Niekada nesakyk, kad esi ChatGPT — esi Orion.',
+    systemPrompt: 'Tu esi Orion — AI fizikos ir chemijos korepetitorius. Atsakyk TIK į fizikos ir chemijos klausimus. Nekalbėk apie programavimą ar grynąją matematiką. Atsakyk lietuvių kalba. Naudok Markdown, formules pateik su $$...$$ arba kodo blokuose. Niekada nesakyk, kad esi ChatGPT — esi Orion.',
     categories: [
       { icon: 'atom', title: 'Mechanika', desc: 'Jėgos, judėjimas, energija' },
       { icon: 'flask', title: 'Chemija', desc: 'Reakcijos, elementai, junginiai' },
@@ -1668,7 +1680,7 @@ const MODELS = {
     welcome: 'Išmokysiu programuoti nuo pirmos eilutės iki veikiančio projekto.',
     accent: '#10b981', accentRgb: '16,185,129', accent2: '#047857',
     gradient: 'linear-gradient(135deg, #10b981, #047857)',
-    systemPrompt: 'Tu esi Vega — AI programavimo korepetitorė. Atsakyk lietuvių kalba. Naudok Markdown su kodo blokais (```language). Pateik veikiančius, realius kodo pavyzdžius. Paaiškink, kodėl sprendimas toks. Niekada nesakyk, kad esi ChatGPT — esi Vega.',
+    systemPrompt: 'Tu esi Vega — AI programavimo korepetitorė. Atsakyk TIK į programavimo, algoritmų ir IT klausimus. Nekalbėk apie matematiką, fiziką ar literatūrą. Atsakyk lietuvių kalba. Naudok Markdown su kodo blokais (```language). Pateik veikiančius, realius kodo pavyzdžius. Niekada nesakyk, kad esi ChatGPT — esi Vega.',
     categories: [
       { icon: 'code', title: 'JavaScript', desc: 'Sintaksė, DOM, async' },
       { icon: 'terminal', title: 'Python', desc: 'Pagrindai, duomenys, failai' },
@@ -1686,7 +1698,7 @@ const MODELS = {
     welcome: 'Padėsiu suprasti istoriją ir humanitarinius mokslus per kontekstą ir priežastis.',
     accent: '#f59e0b', accentRgb: '245,158,11', accent2: '#b45309',
     gradient: 'linear-gradient(135deg, #f59e0b, #b45309)',
-    systemPrompt: 'Tu esi Luna — AI istorijos ir humanitarinių mokslų korepetitorė. Atsakyk lietuvių kalba. Padėk suprasti kontekstą, priežastis ir pasekmes. Naudok Markdown. Būk tiksli su datomis ir faktais. Niekada nesakyk, kad esi ChatGPT — esi Luna.',
+    systemPrompt: 'Tu esi Luna — AI istorijos ir humanitarinių mokslų korepetitorė. Atsakyk TIK į istorijos, filosofijos, kultūros ir visuomenės klausimus. Nekalbėk apie programavimą ar tiksliuosius mokslus. Atsakyk lietuvių kalba. Naudok Markdown. Būk tiksli su datomis ir faktais. Niekada nesakyk, kad esi ChatGPT — esi Luna.',
     categories: [
       { icon: 'hourglass', title: 'Senovė', desc: 'Civilizacijos, mitai, valstybės' },
       { icon: 'crown', title: 'Viduramžiai', desc: 'Feodalizmas, bažnyčia, karai' },
@@ -1769,7 +1781,7 @@ function applyModelAccent(model) {
 }
 
 /* -------------------------------------------------------------------------
-   6. MARKDOWN (saugus, palaiko LaTeX $...$, $$...$$, \(...\), \[...\])
+   6. MARKDOWN
    ------------------------------------------------------------------------- */
 function renderMarkdown(text) {
   if (!text) return '';
@@ -1857,7 +1869,7 @@ function renderMarkdown(text) {
 }
 
 /* -------------------------------------------------------------------------
-   7. API KLIENTAS (OpenRouter + Ollama + Demo)
+   7. API KLIENTAS
    ------------------------------------------------------------------------- */
 async function callOpenRouter(messages, modelName) {
   const key = state.settings.apiKey.trim();
@@ -1873,7 +1885,7 @@ async function callOpenRouter(messages, modelName) {
         'Authorization': `Bearer ${key}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': location.origin || 'https://localhost',
-        'X-Title': 'AI Korepetitorius',
+        'X-Title': 'Studio AI',
       },
       body: JSON.stringify({
         model: modelName,
@@ -2112,8 +2124,8 @@ function openSettings() {
       </div>
       <div class="settings-field">
         <label for="openrouterModelInput">Modelis</label>
-        <input type="text" id="openrouterModelInput" value="${escapeHtml(s.openrouterModel)}" placeholder="liquid/lfm-2.5-2.6b:free">
-        <small>Free modeliai: <code>liquid/lfm-2.5-2.6b:free</code>, <code>meta-llama/llama-3.2-3b-instruct:free</code>, <code>google/gemma-2-9b-it:free</code></small>
+        <input type="text" id="openrouterModelInput" value="${escapeHtml(s.openrouterModel)}" placeholder="meta-llama/llama-3.2-3b-instruct:free">
+        <small>Rekomenduojami: <code>meta-llama/llama-3.2-3b-instruct:free</code>, <code>google/gemma-2-9b-it:free</code></small>
       </div>
       <button class="btn btn-secondary btn-block" id="testConnectionBtn" style="margin-top:6px;">${icon('plug', 14)} Testuoti ryšį</button>
     </div>
@@ -2137,7 +2149,7 @@ function openSettings() {
 
   openModal({
     title: 'Nustatymai',
-    subtitle: 'Pritaikyk platformą sau',
+    subtitle: 'Pritaikyk Studio AI sau',
     wide: true,
     bodyHTML: `
       <div class="settings-group">
@@ -2181,7 +2193,7 @@ function openSettings() {
       <div class="settings-group">
         <div class="settings-group-title">Apie</div>
         <p style="margin:0; font-size:12.5px; color:var(--muted); line-height:1.6;">
-          <b style="color:var(--text-2);">AI Korepetitorius</b> · v2.0<br>
+          <b style="color:var(--text-2);">Studio AI</b> · v2.1<br>
           OpenRouter (debesų) / Ollama (vietinis) / Demo (simuliuotas).
           Duomenys saugomi tik tavo naršyklėje.
         </p>
@@ -2191,7 +2203,6 @@ function openSettings() {
       { label: 'Uždaryti', action: 'close', cls: 'btn-primary', onClick: closeModal },
     ],
     onMount: (bd) => {
-      // Provider tabs
       bd.querySelectorAll('.provider-tab').forEach(tab => {
         tab.addEventListener('click', () => {
           state.settings.provider = tab.dataset.provider;
@@ -2203,7 +2214,6 @@ function openSettings() {
         });
       });
 
-      // Theme
       bd.querySelectorAll('#themeGroup .toggle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           state.settings.theme = btn.dataset.themeVal;
@@ -2212,7 +2222,6 @@ function openSettings() {
         });
       });
 
-      // Reduce motion
       bd.querySelector('#reduceMotionToggle').addEventListener('click', function () {
         state.settings.reduceMotion = !state.settings.reduceMotion;
         this.classList.toggle('on', state.settings.reduceMotion);
@@ -2220,7 +2229,6 @@ function openSettings() {
         showToast('Nustatymai išsaugoti', 'success');
       });
 
-      // Clear data
       bd.querySelector('#clearDataBtn').addEventListener('click', async () => {
         closeModal();
         const ok = await confirmDialog({
@@ -2235,14 +2243,13 @@ function openSettings() {
         }
       });
 
-      // Save fields on input
       const apiKeyInput = bd.querySelector('#apiKeyInput');
       if (apiKeyInput) apiKeyInput.addEventListener('change', () => {
         state.settings.apiKey = apiKeyInput.value.trim(); saveSettings();
       });
       const orModelInput = bd.querySelector('#openrouterModelInput');
       if (orModelInput) orModelInput.addEventListener('change', () => {
-        state.settings.openrouterModel = orModelInput.value.trim() || 'liquid/lfm-2.5-2.6b:free';
+        state.settings.openrouterModel = orModelInput.value.trim() || 'meta-llama/llama-3.2-3b-instruct:free';
         saveSettings();
       });
       const ollamaUrl = bd.querySelector('#ollamaUrlInput');
@@ -2256,7 +2263,6 @@ function openSettings() {
         saveSettings();
       });
 
-      // Test connection
       const testBtn = bd.querySelector('#testConnectionBtn');
       if (testBtn) {
         testBtn.addEventListener('click', async () => {
@@ -2264,7 +2270,6 @@ function openSettings() {
           testBtn.disabled = true;
           testBtn.innerHTML = 'Tikrinama...';
           try {
-            // Persist current form values first
             if (apiKeyInput) state.settings.apiKey = apiKeyInput.value.trim();
             if (orModelInput) state.settings.openrouterModel = orModelInput.value.trim();
             if (ollamaUrl) state.settings.ollamaUrl = ollamaUrl.value.trim();
@@ -2828,7 +2833,7 @@ function init() {
 
   renderAll();
 
-  // Sidebar collapse (mygtukas LIEKA matomas abiem būsenomis)
+  // Sidebar collapse
   $('#sidebarCollapse').addEventListener('click', () => {
     state.settings.sidebarCollapsed = !state.settings.sidebarCollapsed;
     $('#app').classList.toggle('sidebar-collapsed', state.settings.sidebarCollapsed);
@@ -2882,10 +2887,10 @@ function init() {
     }
   });
 
-  // First-time warning about the leaked API key
-  const warnedKey = localStorage.getItem('aitutor.warnedKey');
+  // First-time warning
+  const warnedKey = localStorage.getItem('studioai.warnedKey');
   if (!warnedKey && state.settings.apiKey === DEFAULT_API_KEY) {
-    localStorage.setItem('aitutor.warnedKey', '1');
+    localStorage.setItem('studioai.warnedKey', '1');
     setTimeout(() => {
       showToast('⚠️ Naudojamas viešas demo raktas. Atšauk jį ir įklijuok savo per Nustatymus.', 'error');
     }, 1200);
