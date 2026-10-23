@@ -1,0 +1,2904 @@
+<!DOCTYPE html>
+<html lang="lt" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="AI Korepetitorius — moderni mokymosi platforma su penkiais specializuotais AI asistentais.">
+<title>AI Korepetitorius</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   1. DESIGN TOKENS (visi kintamieji ant :root — kad veiktų
+   ir modalai, ir toastai, ir bet kuris elementas)
+   ========================================================= */
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  --sidebar-width: 288px;
+  --sidebar-collapsed: 76px;
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 0.15s;
+  --dur: 0.22s;
+  --dur-slow: 0.3s;
+
+  --content-max: 860px;
+
+  /* Akcentas — keičiamas JS per modelio pasirinkimą */
+  --accent: #8b5cf6;
+  --accent-rgb: 139, 92, 246;
+  --accent-2: #6d28d9;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0a0b14;
+  --bg-elev: #0f1020;
+  --panel: #14162a;
+  --panel-2: #1a1c33;
+  --surface: #1e2140;
+  --line: #252840;
+  --line-2: #2f3352;
+  --text: #e9eaf4;
+  --text-2: #b8bcd6;
+  --muted: #8689ab;
+  --muted-2: #63678a;
+  --hover: #22253f;
+  --active: #2a2e4f;
+  --overlay: rgba(5, 6, 15, 0.72);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
+  --glass-bg: rgba(15, 16, 32, 0.72);
+  --bubble-ai: #1a1d36;
+  --bubble-ai-border: #262a48;
+  --code-bg: #0d0e1e;
+  --code-header-bg: rgba(255,255,255,0.04);
+  --code-text: #e8e9f3;
+}
+
+:root[data-theme="light"] {
+  --bg: #f6f7fb;
+  --bg-elev: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #fafbfe;
+  --surface: #f0f2f8;
+  --line: #e5e8f2;
+  --line-2: #d5d9e8;
+  --text: #15172a;
+  --text-2: #3d4260;
+  --muted: #6a6f8f;
+  --muted-2: #8a8fa8;
+  --hover: #f0f2f8;
+  --active: #e8ebf5;
+  --overlay: rgba(20, 22, 40, 0.4);
+  --shadow-sm: 0 1px 2px rgba(20, 22, 40, 0.06);
+  --shadow-md: 0 4px 16px rgba(20, 22, 40, 0.08);
+  --shadow-lg: 0 20px 60px rgba(20, 22, 40, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --bubble-ai: #ffffff;
+  --bubble-ai-border: #e5e8f2;
+  --code-bg: #1a1c2e;
+  --code-header-bg: rgba(255,255,255,0.04);
+  --code-text: #e8e9f3;
+}
+
+/* =========================================================
+   2. RESET & BASE
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; }
+a { color: inherit; text-decoration: none; }
+svg { display: block; flex-shrink: 0; }
+::selection { background: rgba(var(--accent-rgb), 0.35); }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: var(--radius-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-2); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================
+   3. LAYOUT
+   ========================================================= */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  height: 100vh;
+  height: 100dvh;
+  transition: grid-template-columns var(--dur) var(--ease);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(1000px 500px at 0% 0%, rgba(var(--accent-rgb), 0.05) 0%, transparent 55%),
+    radial-gradient(900px 500px at 100% 100%, rgba(var(--accent-rgb), 0.03) 0%, transparent 55%),
+    var(--bg);
+}
+.app.sidebar-collapsed { grid-template-columns: var(--sidebar-collapsed) 1fr; }
+
+/* =========================================================
+   4. SIDEBAR
+   ========================================================= */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  z-index: 30;
+  transition: background var(--dur) var(--ease);
+}
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  min-height: 64px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+  position: relative;
+}
+.brand-logo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.25) 100%);
+  pointer-events: none;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity var(--dur) var(--ease);
+}
+.brand-text b {
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.brand-text span {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.sidebar-collapse {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  transition: background var(--dur-fast), color var(--dur-fast);
+  flex-shrink: 0;
+}
+.sidebar-collapse:hover { background: var(--hover); color: var(--text); }
+.sidebar-collapse svg { transition: transform var(--dur) var(--ease); }
+
+/* Kol sulenkta — mygtukas LIEKA matomas (centruotas) */
+.app.sidebar-collapsed .brand-text { opacity: 0; width: 0; pointer-events: none; }
+.app.sidebar-collapsed .brand { justify-content: center; }
+.app.sidebar-collapsed .sidebar-header { justify-content: center; padding: 14px 8px; }
+.app.sidebar-collapsed .sidebar-collapse svg { transform: rotate(180deg); }
+
+.sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+.sidebar-section-label {
+  padding: 12px 10px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity var(--dur) var(--ease);
+}
+.app.sidebar-collapsed .sidebar-section-label { opacity: 0; height: 20px; padding: 4px 0; overflow: hidden; }
+.app.sidebar-collapsed .sidebar-body { padding: 10px 8px 0; }
+
+.model-list { display: flex; flex-direction: column; gap: 3px; }
+.model-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  width: 100%;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+  position: relative;
+  min-height: 48px;
+}
+.model-item:hover { background: var(--hover); }
+.model-item.active {
+  background: rgba(var(--m-accent-rgb, var(--accent-rgb)), 0.1);
+  border-color: rgba(var(--m-accent-rgb, var(--accent-rgb)), 0.28);
+}
+.model-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  border-radius: 0 3px 3px 0;
+  background: rgb(var(--m-accent-rgb, var(--accent-rgb)));
+}
+.model-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  letter-spacing: -0.02em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.model-avatar.lg { width: 36px; height: 36px; border-radius: 10px; font-size: 14px; }
+.model-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.model-info b {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.model-info span {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app.sidebar-collapsed .model-info { display: none; }
+.app.sidebar-collapsed .model-item { justify-content: center; padding: 9px 0; }
+.app.sidebar-collapsed .model-item.active::before { display: none; }
+
+.chat-actions { display: flex; gap: 6px; padding: 2px 4px 8px; }
+.search-box { position: relative; flex: 1; }
+.search-box svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.search-box input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px 0 32px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 12.5px;
+  transition: border-color var(--dur-fast);
+}
+.search-box input::placeholder { color: var(--muted-2); }
+.search-box input:focus { outline: none; border-color: rgba(var(--accent-rgb), 0.5); }
+.app.sidebar-collapsed .chat-actions { display: none; }
+
+.btn-new-chat {
+  height: 34px;
+  width: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  display: grid;
+  place-items: center;
+  transition: all var(--dur-fast);
+}
+.btn-new-chat:hover { background: var(--hover); color: var(--text); border-color: var(--line-2); }
+
+.chat-list { display: flex; flex-direction: column; gap: 2px; padding-bottom: 12px; }
+.chat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background var(--dur-fast), color var(--dur-fast);
+  position: relative;
+  min-height: 36px;
+}
+.chat-item:hover { background: var(--hover); color: var(--text); }
+.chat-item.active { background: var(--active); color: var(--text); }
+.chat-item .chat-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+.chat-item .chat-menu-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity var(--dur-fast), background var(--dur-fast);
+  flex-shrink: 0;
+}
+.chat-item:hover .chat-menu-btn,
+.chat-item.active .chat-menu-btn { opacity: 1; }
+.chat-item .chat-menu-btn:hover { background: var(--line-2); color: var(--text); }
+.app.sidebar-collapsed .chat-list,
+.app.sidebar-collapsed .chat-actions { display: none; }
+
+.chat-empty {
+  padding: 20px 12px;
+  font-size: 12.5px;
+  color: var(--muted-2);
+  text-align: center;
+  line-height: 1.5;
+}
+.app.sidebar-collapsed .chat-empty { display: none; }
+
+.sidebar-footer {
+  padding: 10px;
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sf-btn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: var(--radius-md);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  width: 100%;
+  transition: background var(--dur-fast), color var(--dur-fast);
+  white-space: nowrap;
+}
+.sf-btn:hover { background: var(--hover); color: var(--text); }
+.app.sidebar-collapsed .sf-btn { justify-content: center; padding: 9px 0; }
+.app.sidebar-collapsed .sf-btn span { display: none; }
+
+/* =========================================================
+   5. MAIN AREA
+   ========================================================= */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--line);
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  flex-shrink: 0;
+  z-index: 10;
+  min-height: 64px;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mobile-menu-btn {
+  display: none;
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast);
+}
+.mobile-menu-btn:hover { background: var(--hover); }
+.topbar-model { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.topbar-model-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.topbar-model-info b {
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.topbar-model-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+.status-dot.accent {
+  background: rgb(var(--accent-rgb));
+  box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.6);
+}
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.pill.provider-openrouter { color: rgb(139, 92, 246); border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); }
+.pill.provider-ollama { color: rgb(16, 185, 129); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.08); }
+.pill.provider-demo { color: rgb(245, 158, 11); border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.08); }
+
+.icon-btn {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  color: var(--text-2);
+  transition: background var(--dur-fast), color var(--dur-fast);
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--hover); color: var(--text); }
+
+/* =========================================================
+   6. CHAT AREA
+   ========================================================= */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  scroll-behavior: smooth;
+  min-height: 0;
+}
+.chat-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 28px 24px 12px;
+  min-height: 100%;
+}
+
+/* WELCOME */
+.welcome { padding: 10px 0 40px; animation: fadeUp var(--dur-slow) var(--ease); }
+.welcome-hero { text-align: center; padding: 20px 0 32px; }
+.welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.1);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  color: rgb(var(--accent-rgb));
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+.welcome-hero h1 {
+  font-size: clamp(24px, 3.5vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin: 0 0 12px;
+  color: var(--text);
+}
+.welcome-hero h1 .accent { color: rgb(var(--accent-rgb)); }
+.welcome-hero p {
+  font-size: 15px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 540px;
+}
+.welcome-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 8px 0 14px;
+}
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+.category-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.06), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+  pointer-events: none;
+}
+.category-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--accent-rgb), 0.35);
+  background: var(--panel-2);
+}
+.category-card:hover::after { opacity: 1; }
+.category-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(var(--accent-rgb), 0.1);
+  color: rgb(var(--accent-rgb));
+}
+.category-card b { font-size: 13.5px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.category-card span { font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+.quick-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: 12.8px;
+  font-weight: 500;
+  transition: all var(--dur-fast);
+  text-align: left;
+}
+.quick-chip:hover {
+  background: rgba(var(--accent-rgb), 0.08);
+  border-color: rgba(var(--accent-rgb), 0.3);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+.quick-chip svg { color: rgb(var(--accent-rgb)); }
+
+/* MESSAGES */
+.messages { display: flex; flex-direction: column; gap: 22px; padding-bottom: 16px; }
+.msg { display: flex; gap: 12px; animation: fadeUp var(--dur) var(--ease); }
+.msg.user { justify-content: flex-end; }
+.msg-avatar {
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 2px;
+}
+.msg-body {
+  min-width: 0;
+  max-width: min(100%, 680px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.msg.user .msg-body { align-items: flex-end; }
+.msg-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.msg-head b { color: var(--text-2); font-weight: 600; font-size: 12.5px; }
+.msg-head .msg-time { font-size: 11px; color: var(--muted-2); }
+
+.msg-content {
+  font-size: 14.5px;
+  line-height: 1.68;
+  color: var(--text);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.msg.user .msg-content {
+  background: linear-gradient(135deg, rgb(var(--accent-rgb)), var(--accent-2));
+  color: #fff;
+  padding: 11px 16px;
+  border-radius: 16px 16px 4px 16px;
+  box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.22);
+  max-width: 100%;
+}
+.msg.ai .msg-content {
+  background: var(--bubble-ai);
+  border: 1px solid var(--bubble-ai-border);
+  border-radius: 4px 16px 16px 16px;
+  padding: 12px 16px;
+}
+
+.msg-actions { display: flex; gap: 2px; opacity: 0; transition: opacity var(--dur-fast); padding: 0 2px; }
+.msg:hover .msg-actions,
+.msg:focus-within .msg-actions { opacity: 1; }
+@media (hover: none) { .msg-actions { opacity: 1; } }
+.msg-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  transition: all var(--dur-fast);
+}
+.msg-action:hover { background: var(--hover); color: var(--text); }
+.msg-action svg { width: 12px; height: 12px; }
+
+/* TYPING */
+.typing .msg-content {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 14px 18px;
+}
+.typing i {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgb(var(--accent-rgb));
+  animation: typingBounce 1.3s infinite ease-in-out;
+}
+.typing i:nth-child(2) { animation-delay: 0.15s; }
+.typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* RICH MARKDOWN */
+.msg.ai .msg-content p { margin: 0 0 10px; }
+.msg.ai .msg-content p:last-child { margin-bottom: 0; }
+.msg.ai .msg-content h1,
+.msg.ai .msg-content h2,
+.msg.ai .msg-content h3,
+.msg.ai .msg-content h4 {
+  margin: 16px 0 8px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+}
+.msg.ai .msg-content h1 { font-size: 18px; }
+.msg.ai .msg-content h2 { font-size: 17px; }
+.msg.ai .msg-content h3 { font-size: 15.5px; }
+.msg.ai .msg-content h4 { font-size: 14.5px; }
+.msg.ai .msg-content h1:first-child,
+.msg.ai .msg-content h2:first-child,
+.msg.ai .msg-content h3:first-child,
+.msg.ai .msg-content h4:first-child { margin-top: 0; }
+.msg.ai .msg-content strong { font-weight: 700; color: var(--text); }
+.msg.ai .msg-content em { font-style: italic; }
+.msg.ai .msg-content ul,
+.msg.ai .msg-content ol { margin: 6px 0 10px; padding-left: 22px; }
+.msg.ai .msg-content li { margin: 3px 0; }
+.msg.ai .msg-content blockquote {
+  margin: 10px 0;
+  padding: 8px 14px;
+  border-left: 3px solid rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.05);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-2);
+  font-style: italic;
+}
+.msg.ai .msg-content blockquote p { margin: 0; }
+.msg.ai .msg-content hr { border: 0; height: 1px; background: var(--line); margin: 14px 0; }
+.msg.ai .msg-content a { color: rgb(var(--accent-rgb)); text-decoration: underline; text-underline-offset: 2px; }
+.msg.ai .msg-content .inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.87em;
+  padding: 2px 6px;
+  background: rgba(var(--accent-rgb), 0.1);
+  border: 1px solid rgba(var(--accent-rgb), 0.15);
+  border-radius: 5px;
+  color: rgb(var(--accent-rgb));
+  word-break: break-word;
+}
+.math-inline {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  padding: 1px 6px;
+  background: var(--surface);
+  border-radius: 5px;
+  word-break: break-word;
+}
+.math-block {
+  display: block;
+  text-align: center;
+  padding: 12px 16px;
+  margin: 10px 0;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  overflow-x: auto;
+}
+
+.code-block {
+  margin: 12px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--code-bg);
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--code-header-bg);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.code-lang {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8f93b5;
+  font-family: var(--font-mono);
+}
+.code-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #8f93b5;
+  background: transparent;
+  transition: all var(--dur-fast);
+}
+.code-copy:hover { background: rgba(255,255,255,0.08); color: #e8e9f3; }
+.code-copy svg { width: 11px; height: 11px; }
+.code-block pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12.8px;
+  line-height: 1.6;
+  color: var(--code-text);
+}
+.code-block code { font-family: inherit; }
+
+/* Empty / error */
+.state-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+.state-empty .state-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.state-empty b { color: var(--text-2); font-size: 14.5px; font-weight: 600; }
+.state-empty span { font-size: 12.5px; max-width: 320px; line-height: 1.5; }
+
+/* =========================================================
+   7. COMPOSER
+   ========================================================= */
+.composer {
+  padding: 12px 22px 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+  z-index: 5;
+}
+.composer-inner { max-width: var(--content-max); margin: 0 auto; }
+.input-shell {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  background: var(--bg-elev);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.input-shell:focus-within {
+  border-color: rgba(var(--accent-rgb), 0.55);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.1);
+}
+.input-shell textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14.5px;
+  line-height: 1.5;
+  padding: 8px 0;
+  max-height: 200px;
+}
+.input-shell textarea::placeholder { color: var(--muted-2); }
+
+.clear-btn {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  align-self: center;
+  transition: all var(--dur-fast);
+  opacity: 0;
+  pointer-events: none;
+}
+.clear-btn.visible { opacity: 1; pointer-events: auto; }
+.clear-btn:hover { background: var(--hover); color: var(--text); }
+
+.send-btn {
+  width: 38px; height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgb(var(--accent-rgb)), var(--accent-2));
+  color: #fff;
+  transition: transform var(--dur-fast), opacity var(--dur-fast), box-shadow var(--dur-fast);
+  box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.3);
+  position: relative;
+}
+.send-btn:hover:not(:disabled) { transform: scale(1.05); }
+.send-btn:active:not(:disabled) { transform: scale(0.96); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+.send-btn.busy {
+  background: var(--surface);
+  color: var(--muted);
+  box-shadow: none;
+}
+.send-btn.busy::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 2px solid transparent;
+  border-top-color: rgb(var(--accent-rgb));
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.input-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 6px 0;
+  font-size: 11px;
+  color: var(--muted-2);
+}
+.input-hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.input-hint .demo-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* =========================================================
+   8. TOASTS & MODALS
+   ========================================================= */
+.toasts {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+  max-width: calc(100vw - 40px);
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  pointer-events: auto;
+  max-width: 100%;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success svg { color: #22c55e; }
+.toast.error svg { color: #ef4444; }
+.toast.info svg { color: rgb(var(--accent-rgb)); }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  animation: fadeIn var(--dur) var(--ease);
+  overflow-y: auto;
+}
+.modal {
+  width: 100%;
+  max-width: 500px;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  animation: modalIn var(--dur) var(--ease);
+  overflow: hidden;
+  margin: auto;
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+}
+.modal-head {
+  padding: 20px 22px 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.modal-head h2 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--text);
+}
+.modal-head p {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.modal-close {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  transition: background var(--dur-fast);
+  flex-shrink: 0;
+}
+.modal-close:hover { background: var(--hover); color: var(--text); }
+.modal-body { padding: 16px 22px; overflow-y: auto; flex: 1; }
+.modal-foot {
+  padding: 0 22px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--dur-fast);
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-2);
+  border: 1px solid var(--line);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.btn-primary {
+  background: linear-gradient(135deg, rgb(var(--accent-rgb)), var(--accent-2));
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.28);
+}
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(var(--accent-rgb), 0.35); }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #dc2626; }
+.btn-block { width: 100%; }
+
+.modal-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--bg-elev);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+  transition: border-color var(--dur-fast);
+}
+.modal-input:focus {
+  outline: none;
+  border-color: rgba(var(--accent-rgb), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
+}
+
+.settings-group { margin-bottom: 18px; }
+.settings-group:last-child { margin-bottom: 0; }
+.settings-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.settings-row:last-child { border-bottom: 0; }
+.settings-row .settings-label { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.settings-row .settings-label b { font-size: 13.5px; font-weight: 500; color: var(--text); }
+.settings-row .settings-label span { font-size: 11.5px; color: var(--muted); }
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+}
+.settings-field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.settings-field input,
+.settings-field select {
+  height: 38px;
+  padding: 0 12px;
+  background: var(--bg-elev);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 13px;
+  transition: border-color var(--dur-fast);
+}
+.settings-field input:focus,
+.settings-field select:focus {
+  outline: none;
+  border-color: rgba(var(--accent-rgb), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
+}
+.settings-field small { font-size: 11px; color: var(--muted); line-height: 1.45; }
+.settings-field small a { color: rgb(var(--accent-rgb)); text-decoration: underline; }
+
+.toggle-group {
+  display: inline-flex;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.toggle-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--dur-fast);
+}
+.toggle-btn.active { background: var(--panel); color: var(--text); box-shadow: var(--shadow-sm); }
+.toggle-btn svg { width: 13px; height: 13px; }
+
+.switch {
+  position: relative;
+  width: 38px; height: 22px;
+  border-radius: var(--radius-pill);
+  background: var(--line-2);
+  transition: background var(--dur-fast);
+  flex-shrink: 0;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--dur-fast);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.switch.on { background: rgb(var(--accent-rgb)); }
+.switch.on::after { transform: translateX(16px); }
+
+.provider-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+.provider-tab {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  transition: all var(--dur-fast);
+}
+.provider-tab.active {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.provider-tab small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted-2);
+  margin-top: 2px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 180;
+  min-width: 160px;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 5px;
+  animation: menuIn var(--dur-fast) var(--ease);
+}
+.context-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-align: left;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.context-menu button:hover { background: var(--hover); color: var(--text); }
+.context-menu button.danger { color: #ef4444; }
+.context-menu button.danger:hover { background: rgba(239,68,68,0.1); color: #f87171; }
+.context-menu svg { width: 14px; height: 14px; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 25;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes menuIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* =========================================================
+   9. RESPONSIVE
+   ========================================================= */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .app.sidebar-collapsed { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 288px;
+    max-width: 85vw;
+    transform: translateX(-100%);
+    transition: transform var(--dur) var(--ease);
+    box-shadow: var(--shadow-lg);
+  }
+  .app.mobile-sidebar-open .sidebar { transform: translateX(0); }
+  .app.mobile-sidebar-open .overlay { opacity: 1; pointer-events: auto; }
+  .mobile-menu-btn { display: flex; }
+  .sidebar-collapse { display: none; }
+  .app.sidebar-collapsed .brand-text { opacity: 1; width: auto; pointer-events: auto; }
+  .app.sidebar-collapsed .model-info { display: flex; }
+  .app.sidebar-collapsed .model-item { justify-content: flex-start; padding: 9px 10px; }
+  .app.sidebar-collapsed .model-item.active::before { display: block; }
+  .app.sidebar-collapsed .chat-list,
+  .app.sidebar-collapsed .chat-actions { display: flex; }
+  .app.sidebar-collapsed .chat-actions { display: flex; }
+  .app.sidebar-collapsed .sf-btn span { display: inline; }
+  .app.sidebar-collapsed .sf-btn { justify-content: flex-start; padding: 9px 10px; }
+  .app.sidebar-collapsed .sidebar-body { padding: 10px 10px 0; }
+  .app.sidebar-collapsed .sidebar-section-label { opacity: 1; height: auto; padding: 12px 10px 6px; }
+  .app.sidebar-collapsed .chat-empty { display: block; }
+}
+
+@media (max-width: 640px) {
+  .topbar { padding: 10px 14px; min-height: 60px; }
+  .topbar-model-info b { font-size: 13.5px; }
+  .pill { display: none; }
+  .chat-inner { padding: 20px 14px 8px; }
+  .composer { padding: 10px 12px 12px; }
+  .welcome-hero { padding: 10px 0 24px; }
+  .welcome-hero h1 { font-size: 22px; }
+  .welcome-hero p { font-size: 13.5px; }
+  .category-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .category-card { padding: 13px; }
+  .category-icon { width: 34px; height: 34px; border-radius: 9px; }
+  .category-card b { font-size: 13px; }
+  .category-card span { font-size: 11.5px; }
+  .msg-body { max-width: 100%; }
+  .msg-avatar { width: 26px; height: 26px; font-size: 11px; }
+  .msg-content { font-size: 14px; }
+  .msg.user .msg-content { padding: 10px 14px; }
+  .input-hint .kbd-group { display: none; }
+  .modal { max-width: 100%; }
+  .toasts { bottom: 80px; }
+}
+
+@media (max-width: 380px) {
+  .category-grid { grid-template-columns: 1fr; }
+}
+
+html, body, .app, .main, .chat-area { max-width: 100vw; overflow-x: hidden; }
+img, pre, table, .code-block { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar" aria-label="Šoninė navigacija">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 4 7v10l8 5 8-5V7z"/>
+            <path d="M12 12v7M12 12l7-4.5M12 12 5 7.5"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <b>AI Korepetitorius</b>
+          <span>Mokymosi platforma</span>
+        </div>
+      </div>
+      <button class="sidebar-collapse" id="sidebarCollapse" aria-label="Suskleisti / išskleisti šoninę juostą" title="Suskleisti / išskleisti">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar-body">
+      <div class="sidebar-section-label">Korepetitoriai</div>
+      <div class="model-list" id="modelList" role="listbox" aria-label="Korepetitoriai"></div>
+
+      <div class="sidebar-section-label" style="margin-top: 8px;">Pokalbiai</div>
+      <div class="chat-actions">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="chatSearch" placeholder="Ieškoti pokalbių..." aria-label="Ieškoti pokalbių">
+        </div>
+        <button class="btn-new-chat" id="newChatBtn" aria-label="Naujas pokalbis" title="Naujas pokalbis">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>
+        </button>
+      </div>
+      <div class="chat-list" id="chatList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="sf-btn" id="settingsBtn" aria-label="Nustatymai">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Nustatymai</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Atidaryti meniu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="topbar-model">
+          <div class="model-avatar lg" id="topAvatar" aria-hidden="true">Σ</div>
+          <div class="topbar-model-info">
+            <b id="topName">Atlas</b>
+            <div class="topbar-model-status">
+              <span class="status-dot"></span>
+              <span id="topStatus">Matematika ir logika</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="pill" id="providerPill" title="AI teikėjas">
+          <span class="status-dot accent"></span>
+          <span id="providerText">OpenRouter</span>
+        </span>
+        <button class="icon-btn" id="themeToggle" aria-label="Perjungti temą" title="Perjungti temą"></button>
+      </div>
+    </header>
+
+    <div class="chat-area" id="chatArea">
+      <div class="chat-inner" id="chatInner"></div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-inner">
+        <div class="input-shell">
+          <textarea id="input" rows="1" placeholder="Užduok klausimą arba įklijuok uždavinį..." aria-label="Žinutė"></textarea>
+          <button class="clear-btn" id="clearBtn" aria-label="Išvalyti" title="Išvalyti">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+          <button class="send-btn" id="sendBtn" aria-label="Siųsti" title="Siųsti" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">
+          <div class="kbd-group">
+            <kbd>Enter</kbd> siųsti · <kbd>Shift</kbd> + <kbd>Enter</kbd> nauja eilutė
+          </div>
+          <div class="demo-note" id="modeHint">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span id="modeText">OpenRouter · realūs atsakymai</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="overlay" id="overlay"></div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* =========================================================================
+   AI KOREPETITORIUS — pilnas funkcionalumas su OpenRouter / Ollama / Demo
+   ========================================================================= */
+'use strict';
+
+/* -------------------------------------------------------------------------
+   1. KONFIGŪRACIJA
+   ------------------------------------------------------------------------- */
+// ⚠️ DĖMESIO: Šis raktas yra VIEŠAS (paskelbtas pokalbyje).
+// Atšauk jį https://openrouter.ai/keys ir įklijuok naują per Nustatymus.
+const DEFAULT_API_KEY = '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';
+
+const DEFAULT_SETTINGS = {
+  theme: 'dark',
+  sidebarCollapsed: false,
+  reduceMotion: false,
+  provider: 'openrouter', // 'openrouter' | 'ollama' | 'demo'
+  apiKey: DEFAULT_API_KEY,
+  openrouterModel: 'liquid/lfm-2.5-2.6b:free',
+  ollamaUrl: 'http://localhost:11434',
+  ollamaModel: 'llama3.2',
+};
+
+const STORAGE = {
+  chats: 'aitutor.chats.v2',
+  settings: 'aitutor.settings.v2',
+  seeded: 'aitutor.seeded.v2',
+};
+
+/* -------------------------------------------------------------------------
+   2. IKONOS
+   ------------------------------------------------------------------------- */
+const ICONS = {
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  sparkles: '<path d="M12 3v18M3 12h18"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+  message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  plug: '<path d="M12 22v-5M9 8V2M15 8V2M18 8H6a2 2 0 0 0-2 2v3a6 6 0 0 0 6 6h4a6 6 0 0 0 6-6v-3a2 2 0 0 0-2-2Z"/>',
+};
+
+const CAT_ICONS = {
+  sigma: '<path d="M18 4H6l6 8-6 8h12"/>',
+  triangle: '<path d="M12 3 22 21H2Z"/>',
+  chart: '<path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/>',
+  logic: '<circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><path d="M9 6h6M7.5 8.5l3 7M16.5 8.5l-3 7"/>',
+  pen: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  quote: '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>',
+  translate: '<path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/>',
+  atom: '<circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/>',
+  flask: '<path d="M9 3h6v6l4 10a2 2 0 0 1-1.8 3H6.8A2 2 0 0 1 5 19Z"/><path d="M9 3h6"/>',
+  wave: '<path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/>',
+  bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
+  code: '<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>',
+  terminal: '<path d="m4 17 6-6-6-6M12 19h8"/>',
+  layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
+  cpu: '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>',
+  hourglass: '<path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  crown: '<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7Z"/><path d="M5 20h14"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  scroll: '<path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/>',
+};
+
+function icon(name, size = 16) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
+function catIcon(name, size = 22) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${CAT_ICONS[name] || ICONS.sparkles}</svg>`;
+}
+
+/* -------------------------------------------------------------------------
+   3. MODELIAI (su systeminiais promptais API kvietimams)
+   ------------------------------------------------------------------------- */
+const MODELS = {
+  atlas: {
+    id: 'atlas', name: 'Atlas', avatar: 'Σ',
+    tagline: 'Matematika ir logika',
+    welcome: 'Padėsiu suprasti matematiką ir logiką — nuo paprastų lygčių iki sudėtingų įrodymų.',
+    accent: '#8b5cf6', accentRgb: '139,92,246', accent2: '#6d28d9',
+    gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+    systemPrompt: 'Tu esi Atlas — AI matematikos ir logikos korepetitorius, dirbantis lietuvių kalba. Atsakyk aiškiai, žingsnis po žingsnio. Naudok Markdown formatavimą. Matematinius veiksmus pateik kodo blokuose arba su $$...$$. Būk kantrus, mokomasis, skatink mokinį galvoti pačiam. Niekada nesakyk, kad esi ChatGPT ar kitas modelis — esi Atlas. Atsakymai turi būti lietuviški.',
+    categories: [
+      { icon: 'sigma', title: 'Algebra', desc: 'Lygtys, funkcijos, daugianariai' },
+      { icon: 'triangle', title: 'Geometrija', desc: 'Figūros, plotai, tūriai' },
+      { icon: 'chart', title: 'Statistika', desc: 'Duomenys, tikimybės, vidurkiai' },
+      { icon: 'logic', title: 'Logika', desc: 'Sąlygos, įrodymai, sprendimai' },
+    ],
+    quick: ['Paaiškink Pitagoro teoremą', 'Išspręsk x² − 5x + 6 = 0', 'Kas yra funkcijos išvestinė?'],
+    demoResponses: [
+      'Puikus klausimas! Pradėkime nuo pagrindų.\n\n**1 žingsnis.** Užsirašyk sąlygą ir tai, ką reikia rasti.\n**2 žingsnis.** Pasirink formulę ar taisyklę, kuri sieja duomenis.\n**3 žingsnis.** Atlik veiksmus po vieną ir kiekvieną užsirašyk.\n**4 žingsnis.** Patikrink atsakymą įstatydamas jį atgal į sąlygą.\n\nPabandyk atlikti pirmą žingsnį ir parašyk, ką gavai – patikrinsiu kartu.',
+      'Šį uždavinį galima išspręsti keliais būdais. Štai paprasčiausias:\n\n```\nx² - 5x + 6 = 0\nD = b² - 4ac = 25 - 24 = 1\nx = (5 ± 1) / 2\nx₁ = 3,  x₂ = 2\n```\n\nAr nori, kad paaiškinčiau, iš kur atsiranda diskriminanto formulė?',
+    ],
+  },
+  nova: {
+    id: 'nova', name: 'Nova', avatar: '✦',
+    tagline: 'Kalbos ir rašymas',
+    welcome: 'Padėsiu tobulinti rašymą, gramatiką ir literatūros supratimą.',
+    accent: '#ec4899', accentRgb: '236,72,153', accent2: '#be185d',
+    gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
+    systemPrompt: 'Tu esi Nova — AI lietuvių kalbos ir rašymo korepetitorė. Atsakyk lietuvių kalba. Padėk su rašiniais, gramatika, literatūra, stiliumi. Naudok Markdown. Būk draugiška, bet reikli. Niekada nesakyk, kad esi ChatGPT — esi Nova.',
+    categories: [
+      { icon: 'pen', title: 'Rašiniai', desc: 'Struktūra, argumentai, įžanga' },
+      { icon: 'book', title: 'Gramatika', desc: 'Linksniai, skyryba, sintaksė' },
+      { icon: 'quote', title: 'Literatūra', desc: 'Kūriniai, autoriai, analizė' },
+      { icon: 'translate', title: 'Vertimai', desc: 'Tikslumas, stilius, niuansai' },
+    ],
+    quick: ['Kaip parašyti gerą rašinį?', 'Paaiškink lietuvių kalbos linksnius', 'Padėk su literatūros analize'],
+    demoResponses: [
+      'Geras tekstas prasideda nuo **vienos aiškios minties**.\n\n**Struktūra:**\n- **Įžanga** – vienas sakinys, kuris sudomina.\n- **Dėstymas** – 2–3 pastraipos, kiekviena su viena idėja.\n- **Išvada** – vienas sakinys, apibendrinantis viską.\n\nParašyk savo įžangą – padėsiu ją patobulinti.',
+      'Rašinyje venk šių dalykų:\n\n- per ilgų, painių sakinių;\n- šnekamosios kalbos („tipo“, „nu“, „kažkaip“);\n- per daug epitetų viename sakinyje.\n\nO štai trys posakiai, kurie sustiprins tavo tekstą: *„visų pirma“*, *„kita vertus“*, *„todėl galima teigti“*.',
+    ],
+  },
+  orion: {
+    id: 'orion', name: 'Orion', avatar: '⚛',
+    tagline: 'Fizika ir chemija',
+    welcome: 'Paaiškinsiu fizikos ir chemijos reiškinius paprastai ir tiksliai.',
+    accent: '#06b6d4', accentRgb: '6,182,212', accent2: '#0891b2',
+    gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+    systemPrompt: 'Tu esi Orion — AI fizikos ir chemijos korepetitorius. Atsakyk lietuvių kalba. Naudok Markdown, formules pateik su $$...$$ arba kodo blokuose. Aiškink reiškinius per priežastis ir pasekmes. Niekada nesakyk, kad esi ChatGPT — esi Orion.',
+    categories: [
+      { icon: 'atom', title: 'Mechanika', desc: 'Jėgos, judėjimas, energija' },
+      { icon: 'flask', title: 'Chemija', desc: 'Reakcijos, elementai, junginiai' },
+      { icon: 'wave', title: 'Bangos', desc: 'Šviesa, garsas, svyravimai' },
+      { icon: 'bolt', title: 'Elektra', desc: 'Grandinės, įtampa, srovė' },
+    ],
+    quick: ['Paaiškink energijos tvermės dėsnį', 'Kas yra Niutono dėsniai?', 'Paaiškink cheminę reakciją'],
+    demoResponses: [
+      'Fizikoje viskas prasideda nuo **formulės ir vienetų**.\n\n> Energija neišnyksta ir neatsiranda, ji tik virsta iš vienos formos į kitą.\n\n1. Išsirašyk duomenis su vienetais.\n2. Paversk viską į SI sistemą (m, kg, s).\n3. Pasirink formulę.\n4. Įstatyk ir apskaičiuok.\n\nKokius duomenis turi savo uždavinyje?',
+    ],
+  },
+  vega: {
+    id: 'vega', name: 'Vega', avatar: '</>',
+    tagline: 'Programavimas',
+    welcome: 'Išmokysiu programuoti nuo pirmos eilutės iki veikiančio projekto.',
+    accent: '#10b981', accentRgb: '16,185,129', accent2: '#047857',
+    gradient: 'linear-gradient(135deg, #10b981, #047857)',
+    systemPrompt: 'Tu esi Vega — AI programavimo korepetitorė. Atsakyk lietuvių kalba. Naudok Markdown su kodo blokais (```language). Pateik veikiančius, realius kodo pavyzdžius. Paaiškink, kodėl sprendimas toks. Niekada nesakyk, kad esi ChatGPT — esi Vega.',
+    categories: [
+      { icon: 'code', title: 'JavaScript', desc: 'Sintaksė, DOM, async' },
+      { icon: 'terminal', title: 'Python', desc: 'Pagrindai, duomenys, failai' },
+      { icon: 'layout', title: 'HTML & CSS', desc: 'Struktūra, stilius, layout' },
+      { icon: 'cpu', title: 'Algoritmai', desc: 'Rūšiavimas, paieška, logika' },
+    ],
+    quick: ['Kaip ištaisyti JavaScript klaidą?', 'Paaiškink kas yra rekursija', 'Parodyk Python pavyzdį'],
+    demoResponses: [
+      'Puiki užduotis! Pradėkime nuo mažiausio veikiančio pavyzdžio:\n\n```js\nfunction sveikinti(vardas) {\n  return \'Labas, \' + vardas + \'!\';\n}\n\nconsole.log(sveikinti(\'Tomas\'));\n```\n\nŠi funkcija priima vardą ir grąžina pasisveikinimo tekstą. Ką ji grąžintų, jei perduotume `\'Ana\'`?',
+    ],
+  },
+  luna: {
+    id: 'luna', name: 'Luna', avatar: '◷',
+    tagline: 'Istorija ir humanitarika',
+    welcome: 'Padėsiu suprasti istoriją ir humanitarinius mokslus per kontekstą ir priežastis.',
+    accent: '#f59e0b', accentRgb: '245,158,11', accent2: '#b45309',
+    gradient: 'linear-gradient(135deg, #f59e0b, #b45309)',
+    systemPrompt: 'Tu esi Luna — AI istorijos ir humanitarinių mokslų korepetitorė. Atsakyk lietuvių kalba. Padėk suprasti kontekstą, priežastis ir pasekmes. Naudok Markdown. Būk tiksli su datomis ir faktais. Niekada nesakyk, kad esi ChatGPT — esi Luna.',
+    categories: [
+      { icon: 'hourglass', title: 'Senovė', desc: 'Civilizacijos, mitai, valstybės' },
+      { icon: 'crown', title: 'Viduramžiai', desc: 'Feodalizmas, bažnyčia, karai' },
+      { icon: 'globe', title: 'Modernioji', desc: 'Revoliucijos, pasaulio karai' },
+      { icon: 'scroll', title: 'Kultūra', desc: 'Filosofija, menas, tradicijos' },
+    ],
+    quick: ['Paaiškink LDK istoriją', 'Kas buvo Vytautas Didysis?', 'Paaiškink renesansą'],
+    demoResponses: [
+      'Istorijoje svarbiausia skirti **priežastis** ir **pasekmes**.\n\nŠtai schema, kuri padės atsakyti į bet kurį klausimą:\n\n- **Prieš** – kokios buvo sąlygos?\n- **Įvykis** – kas tiksliai nutiko ir kada?\n- **Po** – kas pasikeitė?\n\nKurį įvykį nagrinėji? Padėsime sudėlioti laiko juostą.',
+    ],
+  },
+};
+
+/* -------------------------------------------------------------------------
+   4. BŪSENA + SAUGYKLA
+   ------------------------------------------------------------------------- */
+let state = {
+  activeModelId: 'atlas',
+  activeChatId: null,
+  chats: [],
+  settings: { ...DEFAULT_SETTINGS },
+  isGenerating: false,
+  searchQuery: '',
+};
+
+function loadState() {
+  try {
+    const rawChats = localStorage.getItem(STORAGE.chats);
+    if (rawChats) {
+      const parsed = JSON.parse(rawChats);
+      if (Array.isArray(parsed)) state.chats = parsed;
+    }
+    const rawSettings = localStorage.getItem(STORAGE.settings);
+    if (rawSettings) {
+      state.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) };
+    }
+  } catch (e) { console.warn('Nepavyko įkelti:', e); }
+}
+function saveChats() {
+  try { localStorage.setItem(STORAGE.chats, JSON.stringify(state.chats)); }
+  catch (e) { console.warn('Nepavyko išsaugoti pokalbių:', e); }
+}
+function saveSettings() {
+  try { localStorage.setItem(STORAGE.settings, JSON.stringify(state.settings)); }
+  catch (e) { console.warn('Nepavyko išsaugoti nustatymų:', e); }
+}
+
+/* -------------------------------------------------------------------------
+   5. PAGALBINĖS
+   ------------------------------------------------------------------------- */
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function $(sel, root = document) { return root.querySelector(sel); }
+function $$(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function truncate(str, n) { return str.length > n ? str.slice(0, n - 1) + '…' : str; }
+function formatTime(ts) {
+  return new Date(ts).toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
+}
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function getModel(id) { return MODELS[id] || MODELS.atlas; }
+function getActiveChat() {
+  if (!state.activeChatId) return null;
+  return state.chats.find(c => c.id === state.activeChatId) || null;
+}
+function getChatsForModel(modelId) {
+  return state.chats.filter(c => c.modelId === modelId).sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+function applyModelAccent(model) {
+  const r = document.documentElement.style;
+  r.setProperty('--accent', model.accent);
+  r.setProperty('--accent-rgb', model.accentRgb);
+  r.setProperty('--accent-2', model.accent2);
+}
+
+/* -------------------------------------------------------------------------
+   6. MARKDOWN (saugus, palaiko LaTeX $...$, $$...$$, \(...\), \[...\])
+   ------------------------------------------------------------------------- */
+function renderMarkdown(text) {
+  if (!text) return '';
+
+  const mathBlocks = [];
+  let work = text
+    .replace(/\$\$([\s\S]+?)\$\$/g, (m, e) => { mathBlocks.push({ e, block: true }); return `\u0001M${mathBlocks.length - 1}\u0001`; })
+    .replace(/\\\[([\s\S]+?)\\\]/g, (m, e) => { mathBlocks.push({ e, block: true }); return `\u0001M${mathBlocks.length - 1}\u0001`; })
+    .replace(/\$([^$\n]+?)\$/g, (m, e) => { mathBlocks.push({ e, block: false }); return `\u0001M${mathBlocks.length - 1}\u0001`; })
+    .replace(/\\\(([^)]+?)\\\)/g, (m, e) => { mathBlocks.push({ e, block: false }); return `\u0001M${mathBlocks.length - 1}\u0001`; });
+
+  const codeBlocks = [];
+  work = work.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+    codeBlocks.push({ lang: (lang || 'code').toLowerCase(), code: code.replace(/\n$/, '') });
+    return `\u0001C${codeBlocks.length - 1}\u0001`;
+  });
+
+  work = escapeHtml(work);
+  work = work.replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>');
+  work = work.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  work = work.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+  work = work.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+
+  const lines = work.split('\n');
+  const out = [];
+  let listType = null, inQuote = false;
+  let para = [];
+
+  const flushPara = () => {
+    if (para.length) { const c = para.join(' ').trim(); if (c) out.push(`<p>${c}</p>`); para = []; }
+  };
+  const closeList = () => { if (listType) { out.push(listType === 'ul' ? '</ul>' : '</ol>'); listType = null; } };
+  const closeQuote = () => { if (inQuote) { out.push('</blockquote>'); inQuote = false; } };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trim = line.trim();
+
+    if (/^\u0001[CM]\d+\u0001$/.test(trim)) { flushPara(); closeList(); closeQuote(); out.push(trim); continue; }
+    if (!trim) { flushPara(); closeList(); closeQuote(); continue; }
+
+    const h = trim.match(/^(#{1,4})\s+(.+)$/);
+    if (h) { flushPara(); closeList(); closeQuote(); const lvl = Math.min(h[1].length + 1, 6); out.push(`<h${lvl}>${h[2]}</h${lvl}>`); continue; }
+
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(trim)) { flushPara(); closeList(); closeQuote(); out.push('<hr>'); continue; }
+
+    if (/^&gt;\s?/.test(trim)) {
+      flushPara(); closeList();
+      if (!inQuote) { out.push('<blockquote>'); inQuote = true; }
+      out.push(`<p>${trim.replace(/^&gt;\s?/, '')}</p>`);
+      continue;
+    } else if (inQuote) closeQuote();
+
+    const ul = trim.match(/^[-*+]\s+(.+)$/);
+    if (ul) { flushPara(); if (listType !== 'ul') { closeList(); out.push('<ul>'); listType = 'ul'; } out.push(`<li>${ul[1]}</li>`); continue; }
+
+    const ol = trim.match(/^\d+\.\s+(.+)$/);
+    if (ol) { flushPara(); if (listType !== 'ol') { closeList(); out.push('<ol>'); listType = 'ol'; } out.push(`<li>${ol[1]}</li>`); continue; }
+
+    closeList(); closeQuote(); para.push(trim);
+  }
+  flushPara(); closeList(); closeQuote();
+
+  let html = out.join('\n');
+  html = html.replace(/\u0001M(\d+)\u0001/g, (m, idx) => {
+    const mb = mathBlocks[+idx];
+    const tag = mb.block ? 'div' : 'span';
+    const cls = mb.block ? 'math-block' : 'math-inline';
+    return `<${tag} class="${cls}">${escapeHtml(mb.e)}</${tag}>`;
+  });
+  html = html.replace(/\u0001C(\d+)\u0001/g, (m, idx) => {
+    const cb = codeBlocks[+idx];
+    const enc = encodeURIComponent(cb.code);
+    return `<div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">${escapeHtml(cb.lang)}</span>
+        <button class="code-copy" data-code="${enc}" aria-label="Kopijuoti kodą">
+          ${icon('copy', 11)}<span>Kopijuoti</span>
+        </button>
+      </div>
+      <pre><code>${escapeHtml(cb.code)}</code></pre>
+    </div>`;
+  });
+  return html;
+}
+
+/* -------------------------------------------------------------------------
+   7. API KLIENTAS (OpenRouter + Ollama + Demo)
+   ------------------------------------------------------------------------- */
+async function callOpenRouter(messages, modelName) {
+  const key = state.settings.apiKey.trim();
+  if (!key) throw new Error('Trūksta OpenRouter API rakto. Įvesk jį Nustatymuose.');
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': location.origin || 'https://localhost',
+        'X-Title': 'AI Korepetitorius',
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages,
+        max_tokens: 1500,
+        temperature: 0.7,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const errJson = await res.json();
+        detail = errJson?.error?.message || errJson?.error || JSON.stringify(errJson);
+      } catch { detail = await res.text(); }
+      throw new Error(`OpenRouter ${res.status}: ${String(detail).slice(0, 240)}`);
+    }
+
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw new Error('Tuščias atsakymas iš OpenRouter.');
+    return content.trim();
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Užklausa nutraukta (60 s timeout).');
+    if (err instanceof TypeError && /fetch/i.test(err.message)) {
+      throw new Error('Tinklo klaida. Patikrink interneto ryšį arba CORS (jei failą atidarai per file://, paleisk per http serverį).');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function callOllama(messages) {
+  const url = (state.settings.ollamaUrl || '').replace(/\/+$/, '');
+  if (!url) throw new Error('Nenurodytas Ollama serverio URL.');
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 120000);
+
+  try {
+    const res = await fetch(`${url}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: state.settings.ollamaModel,
+        messages,
+        stream: false,
+        options: { temperature: 0.7 },
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`Ollama ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const data = await res.json();
+    const content = data?.message?.content;
+    if (!content) throw new Error('Tuščias atsakymas iš Ollama.');
+    return content.trim();
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Užklausa nutraukta (120 s timeout).');
+    if (err instanceof TypeError) {
+      throw new Error('Nepavyksta prisijungti prie Ollama. Ar paleistas `ollama serve`? Ar CORS leidžia? Nustatyk `OLLAMA_ORIGINS=*`.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function callAI(modelId, chatMessages) {
+  const model = getModel(modelId);
+  const provider = state.settings.provider;
+
+  if (provider === 'demo') {
+    await sleep(700 + Math.random() * 400);
+    return pick(model.demoResponses);
+  }
+
+  const apiMessages = [
+    { role: 'system', content: model.systemPrompt },
+    ...chatMessages.slice(-14).map(m => ({
+      role: m.role === 'ai' ? 'assistant' : 'user',
+      content: String(m.content || '').slice(0, 4000),
+    })),
+  ];
+
+  if (provider === 'openrouter') {
+    return await callOpenRouter(apiMessages, state.settings.openrouterModel);
+  }
+  if (provider === 'ollama') {
+    return await callOllama(apiMessages);
+  }
+  throw new Error('Nepažįstamas teikėjas: ' + provider);
+}
+
+/* -------------------------------------------------------------------------
+   8. TOAST / MODAL
+   ------------------------------------------------------------------------- */
+function showToast(message, type = 'info') {
+  const toasts = $('#toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const ico = type === 'success' ? 'check' : type === 'error' ? 'alert' : 'sparkles';
+  el.innerHTML = `${icon(ico, 14)}<span>${escapeHtml(message)}</span>`;
+  toasts.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3200);
+}
+
+function closeModal() {
+  $('#modalRoot').innerHTML = '';
+  document.removeEventListener('keydown', modalEscHandler);
+}
+function modalEscHandler(e) { if (e.key === 'Escape') closeModal(); }
+
+function openModal({ title, subtitle, bodyHTML, actions, onMount, wide }) {
+  closeModal();
+  const root = $('#modalRoot');
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}" ${wide ? 'style="max-width:600px"' : ''}>
+      <div class="modal-head">
+        <div>
+          <h2>${escapeHtml(title)}</h2>
+          ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ''}
+        </div>
+        <button class="modal-close" aria-label="Uždaryti">${icon('x', 16)}</button>
+      </div>
+      <div class="modal-body">${bodyHTML}</div>
+      <div class="modal-foot">${actions.map(a => `
+        <button class="btn ${a.cls || 'btn-secondary'}" data-action="${a.action}" ${a.disabled ? 'disabled' : ''}>${a.label}</button>
+      `).join('')}</div>
+    </div>
+  `;
+  root.appendChild(backdrop);
+  document.addEventListener('keydown', modalEscHandler);
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal(); });
+  backdrop.querySelector('.modal-close').addEventListener('click', closeModal);
+  backdrop.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const handler = actions.find(a => a.action === btn.dataset.action);
+      if (handler && handler.onClick) handler.onClick(backdrop);
+    });
+  });
+  if (onMount) onMount(backdrop);
+}
+
+function confirmDialog({ title, message, confirmLabel = 'Patvirtinti', danger = false }) {
+  return new Promise(resolve => {
+    openModal({
+      title,
+      bodyHTML: `<p style="margin:0; color:var(--text-2); font-size:14px; line-height:1.55;">${escapeHtml(message)}</p>`,
+      actions: [
+        { label: 'Atšaukti', action: 'cancel', cls: 'btn-secondary', onClick: () => { closeModal(); resolve(false); } },
+        { label: confirmLabel, action: 'confirm', cls: danger ? 'btn-danger' : 'btn-primary', onClick: () => { closeModal(); resolve(true); } },
+      ],
+    });
+  });
+}
+
+function promptDialog({ title, subtitle, defaultValue = '', confirmLabel = 'Išsaugoti' }) {
+  return new Promise(resolve => {
+    openModal({
+      title, subtitle,
+      bodyHTML: `<input type="text" class="modal-input" id="promptInput" value="${escapeHtml(defaultValue)}" maxlength="80" placeholder="Įveskite pavadinimą">`,
+      actions: [
+        { label: 'Atšaukti', action: 'cancel', cls: 'btn-secondary', onClick: () => { closeModal(); resolve(null); } },
+        { label: confirmLabel, action: 'confirm', cls: 'btn-primary', onClick: (bd) => {
+          const v = bd.querySelector('#promptInput').value.trim();
+          closeModal(); resolve(v || null);
+        } },
+      ],
+      onMount: (bd) => {
+        const input = bd.querySelector('#promptInput');
+        input.focus(); input.select();
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { const v = input.value.trim(); closeModal(); resolve(v || null); }
+        });
+      },
+    });
+  });
+}
+
+/* -------------------------------------------------------------------------
+   9. TEMA / NUSTATYMAI
+   ------------------------------------------------------------------------- */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.settings.theme);
+  const btn = $('#themeToggle');
+  btn.innerHTML = state.settings.theme === 'dark' ? icon('sun', 17) : icon('moon', 17);
+  btn.title = state.settings.theme === 'dark' ? 'Šviesi tema' : 'Tamsi tema';
+  btn.setAttribute('aria-label', btn.title);
+}
+function applyReducedMotion() {
+  document.documentElement.style.setProperty('--dur', state.settings.reduceMotion ? '0.01s' : '0.22s');
+}
+function toggleTheme() {
+  state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(); saveSettings();
+}
+
+function updateProviderPill() {
+  const pill = $('#providerPill');
+  const text = $('#providerText');
+  const modeText = $('#modeText');
+  const p = state.settings.provider;
+  pill.className = 'pill provider-' + p;
+  if (p === 'openrouter') { text.textContent = 'OpenRouter'; modeText.textContent = 'OpenRouter · realūs atsakymai'; }
+  else if (p === 'ollama') { text.textContent = 'Ollama (local)'; modeText.textContent = 'Ollama · vietinis modelis'; }
+  else { text.textContent = 'Demo režimas'; modeText.textContent = 'Demo · simuliuoti atsakymai'; }
+}
+
+function openSettings() {
+  const s = state.settings;
+  const providerTabs = `
+    <div class="provider-tabs" id="providerTabs">
+      <button class="provider-tab ${s.provider === 'openrouter' ? 'active' : ''}" data-provider="openrouter">
+        OpenRouter<small>debesų API</small>
+      </button>
+      <button class="provider-tab ${s.provider === 'ollama' ? 'active' : ''}" data-provider="ollama">
+        Ollama<small>vietinis</small>
+      </button>
+      <button class="provider-tab ${s.provider === 'demo' ? 'active' : ''}" data-provider="demo">
+        Demo<small>be interneto</small>
+      </button>
+    </div>
+  `;
+
+  const openrouterFields = `
+    <div id="openrouterFields" style="display:${s.provider === 'openrouter' ? 'block' : 'none'}">
+      <div class="settings-field">
+        <label for="apiKeyInput">OpenRouter API raktas</label>
+        <input type="password" id="apiKeyInput" value="${escapeHtml(s.apiKey)}" placeholder="sk-or-v1-..." autocomplete="off">
+        <small>Gauk raktą <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>. Raktas saugomas tik šioje naršyklėje (localStorage).</small>
+      </div>
+      <div class="settings-field">
+        <label for="openrouterModelInput">Modelis</label>
+        <input type="text" id="openrouterModelInput" value="${escapeHtml(s.openrouterModel)}" placeholder="liquid/lfm-2.5-2.6b:free">
+        <small>Free modeliai: <code>liquid/lfm-2.5-2.6b:free</code>, <code>meta-llama/llama-3.2-3b-instruct:free</code>, <code>google/gemma-2-9b-it:free</code></small>
+      </div>
+      <button class="btn btn-secondary btn-block" id="testConnectionBtn" style="margin-top:6px;">${icon('plug', 14)} Testuoti ryšį</button>
+    </div>
+  `;
+
+  const ollamaFields = `
+    <div id="ollamaFields" style="display:${s.provider === 'ollama' ? 'block' : 'none'}">
+      <div class="settings-field">
+        <label for="ollamaUrlInput">Ollama serverio URL</label>
+        <input type="text" id="ollamaUrlInput" value="${escapeHtml(s.ollamaUrl)}" placeholder="http://localhost:11434">
+        <small>Įdiek <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a> ir paleisk <code>ollama serve</code>. Dėl CORS nustatyk aplinkos kintamąjį <code>OLLAMA_ORIGINS=*</code>.</small>
+      </div>
+      <div class="settings-field">
+        <label for="ollamaModelInput">Modelis</label>
+        <input type="text" id="ollamaModelInput" value="${escapeHtml(s.ollamaModel)}" placeholder="llama3.2">
+        <small>Pvz. <code>llama3.2</code>, <code>qwen2.5</code>, <code>gemma2</code>. Parsisiųsk su <code>ollama pull llama3.2</code>.</small>
+      </div>
+      <button class="btn btn-secondary btn-block" id="testConnectionBtn" style="margin-top:6px;">${icon('plug', 14)} Testuoti ryšį</button>
+    </div>
+  `;
+
+  openModal({
+    title: 'Nustatymai',
+    subtitle: 'Pritaikyk platformą sau',
+    wide: true,
+    bodyHTML: `
+      <div class="settings-group">
+        <div class="settings-group-title">AI teikėjas</div>
+        ${providerTabs}
+        ${openrouterFields}
+        ${ollamaFields}
+        <div id="demoFields" style="display:${s.provider === 'demo' ? 'block' : 'none'}">
+          <p style="margin:0; font-size:12.5px; color:var(--muted); line-height:1.55;">
+            Demo režimas naudoja iš anksto paruoštus atsakymus. Nereikia interneto ar rakto. Puikiai tinka prototipo demonstracijai.
+          </p>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">Išvaizda</div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <b>Tema</b><span>Tamsi arba šviesi sąsaja</span>
+          </div>
+          <div class="toggle-group" id="themeGroup">
+            <button class="toggle-btn ${s.theme === 'dark' ? 'active' : ''}" data-theme-val="dark">${icon('moon', 12)} Tamsi</button>
+            <button class="toggle-btn ${s.theme === 'light' ? 'active' : ''}" data-theme-val="light">${icon('sun', 12)} Šviesi</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <b>Sumažinti animacijas</b><span>Sklandesnis veikimas silpnesniuose įrenginiuose</span>
+          </div>
+          <button class="switch ${s.reduceMotion ? 'on' : ''}" id="reduceMotionToggle" aria-label="Sumažinti animacijas"></button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">Duomenys</div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <b>Išvalyti visus pokalbius</b><span>Pašalins visą istoriją iš šios naršyklės</span>
+          </div>
+          <button class="btn btn-secondary" id="clearDataBtn" style="padding:7px 12px;font-size:12px;">Išvalyti</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">Apie</div>
+        <p style="margin:0; font-size:12.5px; color:var(--muted); line-height:1.6;">
+          <b style="color:var(--text-2);">AI Korepetitorius</b> · v2.0<br>
+          OpenRouter (debesų) / Ollama (vietinis) / Demo (simuliuotas).
+          Duomenys saugomi tik tavo naršyklėje.
+        </p>
+      </div>
+    `,
+    actions: [
+      { label: 'Uždaryti', action: 'close', cls: 'btn-primary', onClick: closeModal },
+    ],
+    onMount: (bd) => {
+      // Provider tabs
+      bd.querySelectorAll('.provider-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          state.settings.provider = tab.dataset.provider;
+          saveSettings(); updateProviderPill();
+          bd.querySelectorAll('.provider-tab').forEach(t => t.classList.toggle('active', t === tab));
+          bd.querySelector('#openrouterFields').style.display = tab.dataset.provider === 'openrouter' ? 'block' : 'none';
+          bd.querySelector('#ollamaFields').style.display = tab.dataset.provider === 'ollama' ? 'block' : 'none';
+          bd.querySelector('#demoFields').style.display = tab.dataset.provider === 'demo' ? 'block' : 'none';
+        });
+      });
+
+      // Theme
+      bd.querySelectorAll('#themeGroup .toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.settings.theme = btn.dataset.themeVal;
+          applyTheme(); saveSettings();
+          bd.querySelectorAll('#themeGroup .toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+        });
+      });
+
+      // Reduce motion
+      bd.querySelector('#reduceMotionToggle').addEventListener('click', function () {
+        state.settings.reduceMotion = !state.settings.reduceMotion;
+        this.classList.toggle('on', state.settings.reduceMotion);
+        applyReducedMotion(); saveSettings();
+        showToast('Nustatymai išsaugoti', 'success');
+      });
+
+      // Clear data
+      bd.querySelector('#clearDataBtn').addEventListener('click', async () => {
+        closeModal();
+        const ok = await confirmDialog({
+          title: 'Išvalyti visus duomenis?',
+          message: 'Bus pašalinti visi pokalbiai. Šis veiksmas negrįžtamas.',
+          confirmLabel: 'Išvalyti viską', danger: true,
+        });
+        if (ok) {
+          state.chats = []; state.activeChatId = null; saveChats();
+          renderAll();
+          showToast('Visi pokalbiai pašalinti', 'success');
+        }
+      });
+
+      // Save fields on input
+      const apiKeyInput = bd.querySelector('#apiKeyInput');
+      if (apiKeyInput) apiKeyInput.addEventListener('change', () => {
+        state.settings.apiKey = apiKeyInput.value.trim(); saveSettings();
+      });
+      const orModelInput = bd.querySelector('#openrouterModelInput');
+      if (orModelInput) orModelInput.addEventListener('change', () => {
+        state.settings.openrouterModel = orModelInput.value.trim() || 'liquid/lfm-2.5-2.6b:free';
+        saveSettings();
+      });
+      const ollamaUrl = bd.querySelector('#ollamaUrlInput');
+      if (ollamaUrl) ollamaUrl.addEventListener('change', () => {
+        state.settings.ollamaUrl = ollamaUrl.value.trim() || 'http://localhost:11434';
+        saveSettings();
+      });
+      const ollamaModel = bd.querySelector('#ollamaModelInput');
+      if (ollamaModel) ollamaModel.addEventListener('change', () => {
+        state.settings.ollamaModel = ollamaModel.value.trim() || 'llama3.2';
+        saveSettings();
+      });
+
+      // Test connection
+      const testBtn = bd.querySelector('#testConnectionBtn');
+      if (testBtn) {
+        testBtn.addEventListener('click', async () => {
+          const orig = testBtn.innerHTML;
+          testBtn.disabled = true;
+          testBtn.innerHTML = 'Tikrinama...';
+          try {
+            // Persist current form values first
+            if (apiKeyInput) state.settings.apiKey = apiKeyInput.value.trim();
+            if (orModelInput) state.settings.openrouterModel = orModelInput.value.trim();
+            if (ollamaUrl) state.settings.ollamaUrl = ollamaUrl.value.trim();
+            if (ollamaModel) state.settings.ollamaModel = ollamaModel.value.trim();
+            saveSettings();
+
+            const testMessages = [
+              { role: 'system', content: 'Atsakyk labai trumpai.' },
+              { role: 'user', content: 'Atsakyk vienu žodžiu: veikia' },
+            ];
+            let reply;
+            if (state.settings.provider === 'openrouter') {
+              reply = await callOpenRouter(testMessages, state.settings.openrouterModel);
+            } else if (state.settings.provider === 'ollama') {
+              reply = await callOllama(testMessages);
+            } else {
+              reply = 'Demo režimas veikia (be API).';
+            }
+            showToast('Ryšys veikia: ' + String(reply).slice(0, 60), 'success');
+          } catch (err) {
+            showToast('Klaida: ' + err.message, 'error');
+          } finally {
+            testBtn.disabled = false;
+            testBtn.innerHTML = orig;
+          }
+        });
+      }
+    },
+  });
+}
+
+/* -------------------------------------------------------------------------
+   10. POKALBIŲ VALDYMAS
+   ------------------------------------------------------------------------- */
+function createChat(modelId, title) {
+  const chat = {
+    id: uid(), modelId,
+    title: truncate(title || 'Naujas pokalbis', 48),
+    messages: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  state.chats.push(chat);
+  saveChats();
+  return chat;
+}
+function deleteChat(chatId) {
+  state.chats = state.chats.filter(c => c.id !== chatId);
+  if (state.activeChatId === chatId) {
+    const rem = getChatsForModel(state.activeModelId);
+    state.activeChatId = rem.length ? rem[0].id : null;
+  }
+  saveChats();
+}
+function renameChat(chatId, newTitle) {
+  const chat = state.chats.find(c => c.id === chatId);
+  if (!chat) return;
+  chat.title = truncate(newTitle, 48); chat.updatedAt = Date.now();
+  saveChats();
+}
+function switchModel(modelId) {
+  if (state.isGenerating) return;
+  state.activeModelId = modelId;
+  state.activeChatId = (getChatsForModel(modelId)[0] || {}).id || null;
+  $('#app').classList.remove('mobile-sidebar-open');
+  applyModelAccent(getModel(modelId));
+  updateTopbar();
+  renderSidebar();
+  renderChat();
+}
+function newChat() {
+  if (state.isGenerating) return;
+  state.activeChatId = null;
+  $('#app').classList.remove('mobile-sidebar-open');
+  renderSidebar();
+  renderChat();
+  setTimeout(() => $('#input').focus(), 60);
+}
+function openChat(chatId) {
+  if (state.isGenerating) return;
+  const chat = state.chats.find(c => c.id === chatId);
+  if (!chat) return;
+  state.activeChatId = chatId;
+  if (chat.modelId !== state.activeModelId) {
+    state.activeModelId = chat.modelId;
+    applyModelAccent(getModel(chat.modelId));
+    updateTopbar();
+  }
+  $('#app').classList.remove('mobile-sidebar-open');
+  renderSidebar();
+  renderChat();
+}
+
+/* -------------------------------------------------------------------------
+   11. SIDEBAR RENDER
+   ------------------------------------------------------------------------- */
+function renderSidebar() {
+  const modelList = $('#modelList');
+  modelList.innerHTML = '';
+  Object.values(MODELS).forEach(m => {
+    const active = m.id === state.activeModelId;
+    const btn = document.createElement('button');
+    btn.className = 'model-item' + (active ? ' active' : '');
+    btn.setAttribute('role', 'option');
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    btn.style.setProperty('--m-accent-rgb', m.accentRgb);
+    btn.innerHTML = `
+      <div class="model-avatar" style="background:${m.gradient}">${escapeHtml(m.avatar)}</div>
+      <div class="model-info">
+        <b>${escapeHtml(m.name)}</b>
+        <span>${escapeHtml(m.tagline)}</span>
+      </div>
+    `;
+    btn.addEventListener('click', () => switchModel(m.id));
+    modelList.appendChild(btn);
+  });
+
+  const list = $('#chatList');
+  list.innerHTML = '';
+  let chats = getChatsForModel(state.activeModelId);
+  if (state.searchQuery) {
+    const q = state.searchQuery.toLowerCase();
+    chats = chats.filter(c => c.title.toLowerCase().includes(q));
+  }
+
+  if (!chats.length) {
+    const empty = document.createElement('div');
+    empty.className = 'chat-empty';
+    empty.textContent = state.searchQuery ? 'Nieko nerasta pagal paiešką.' : 'Dar nėra pokalbių. Pradėk naują!';
+    list.appendChild(empty);
+    return;
+  }
+
+  chats.forEach(chat => {
+    const item = document.createElement('div');
+    item.className = 'chat-item' + (chat.id === state.activeChatId ? ' active' : '');
+    item.setAttribute('role', 'button');
+    item.setAttribute('tabindex', '0');
+    item.innerHTML = `
+      <span class="chat-title">${escapeHtml(chat.title)}</span>
+      <button class="chat-menu-btn" aria-label="Pokalbio meniu">${icon('more', 14)}</button>
+    `;
+    const open = () => openChat(chat.id);
+    item.addEventListener('click', e => { if (e.target.closest('.chat-menu-btn')) return; open(); });
+    item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    item.querySelector('.chat-menu-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      const rect = e.currentTarget.getBoundingClientRect();
+      showChatContextMenu(rect.right, rect.bottom, chat);
+    });
+    list.appendChild(item);
+  });
+}
+
+/* -------------------------------------------------------------------------
+   12. TOPBAR
+   ------------------------------------------------------------------------- */
+function updateTopbar() {
+  const model = getModel(state.activeModelId);
+  const avatar = $('#topAvatar');
+  avatar.textContent = model.avatar;
+  avatar.style.background = model.gradient;
+  $('#topName').textContent = model.name;
+  $('#topStatus').textContent = model.tagline;
+}
+
+/* -------------------------------------------------------------------------
+   13. CHAT RENDER
+   ------------------------------------------------------------------------- */
+function renderChat() {
+  const inner = $('#chatInner');
+  const chat = getActiveChat();
+  if (!chat || chat.messages.length === 0) { renderWelcome(); return; }
+
+  const model = getModel(state.activeModelId);
+  const messagesEl = document.createElement('div');
+  messagesEl.className = 'messages';
+  messagesEl.id = 'messages';
+  chat.messages.forEach(msg => messagesEl.appendChild(buildMessageEl(msg, model)));
+
+  inner.innerHTML = '';
+  inner.appendChild(messagesEl);
+  requestAnimationFrame(() => scrollToBottom(false));
+}
+
+function renderWelcome() {
+  const model = getModel(state.activeModelId);
+  const inner = $('#chatInner');
+  inner.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'welcome';
+
+  const categoriesHTML = model.categories.map(cat => `
+    <button class="category-card" data-category="${escapeHtml(cat.title)}">
+      <div class="category-icon">${catIcon(cat.icon, 20)}</div>
+      <b>${escapeHtml(cat.title)}</b>
+      <span>${escapeHtml(cat.desc)}</span>
+    </button>
+  `).join('');
+
+  const quickHTML = model.quick.map(q => `
+    <button class="quick-chip" data-quick="${escapeHtml(q)}">
+      ${icon('sparkles', 13)}<span>${escapeHtml(q)}</span>
+    </button>
+  `).join('');
+
+  wrap.innerHTML = `
+    <div class="welcome-hero">
+      <div class="welcome-badge">${icon('sparkles', 12)}<span>${escapeHtml(model.tagline)}</span></div>
+      <h1>Sveiki atvykę pas <span class="accent">${escapeHtml(model.name)}</span></h1>
+      <p>${escapeHtml(model.welcome)}</p>
+    </div>
+    <div class="welcome-section-title">Mokymosi sritys</div>
+    <div class="category-grid">${categoriesHTML}</div>
+    <div class="welcome-section-title">Greitos užduotys</div>
+    <div class="quick-list">${quickHTML}</div>
+  `;
+  inner.appendChild(wrap);
+
+  wrap.querySelectorAll('.category-card').forEach(card => {
+    card.addEventListener('click', () => {
+      sendMessage(`Noriu sužinoti daugiau apie ${card.dataset.category}. Paaiškink pagrindus.`);
+    });
+  });
+  wrap.querySelectorAll('.quick-chip').forEach(chip => {
+    chip.addEventListener('click', () => sendMessage(chip.dataset.quick));
+  });
+}
+
+function buildMessageEl(msg, model) {
+  const el = document.createElement('div');
+  el.className = 'msg ' + msg.role;
+  el.dataset.msgId = msg.id;
+
+  if (msg.role === 'ai') {
+    el.innerHTML = `
+      <div class="msg-avatar" style="background:${model.gradient}">${escapeHtml(model.avatar)}</div>
+      <div class="msg-body">
+        <div class="msg-head">
+          <b>${escapeHtml(model.name)}</b>
+          <span class="msg-time">${formatTime(msg.timestamp)}</span>
+        </div>
+        <div class="msg-content">${renderMarkdown(msg.content)}</div>
+        <div class="msg-actions">
+          <button class="msg-action" data-act="copy">${icon('copy', 12)} Kopijuoti</button>
+          <button class="msg-action" data-act="regen">${icon('refresh', 12)} Generuoti iš naujo</button>
+        </div>
+      </div>
+    `;
+  } else {
+    el.innerHTML = `
+      <div class="msg-body">
+        <div class="msg-head"><span class="msg-time">${formatTime(msg.timestamp)}</span></div>
+        <div class="msg-content">${renderMarkdown(msg.content)}</div>
+      </div>
+    `;
+  }
+
+  el.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.act === 'copy') copyToClipboard(msg.content, 'Atsakymas nukopijuotas');
+      else if (btn.dataset.act === 'regen') regenerateMessage(msg.id);
+    });
+  });
+  el.querySelectorAll('.code-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const raw = decodeURIComponent(btn.dataset.code || '');
+      copyToClipboard(raw, 'Kodas nukopijuotas');
+    });
+  });
+  return el;
+}
+
+function scrollToBottom(smooth = true) {
+  const area = $('#chatArea');
+  if (!area) return;
+  area.scrollTo({ top: area.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+}
+function isNearBottom() {
+  const area = $('#chatArea');
+  if (!area) return true;
+  return area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+}
+
+/* -------------------------------------------------------------------------
+   14. SIUNTIMAS / REGENERAVIMAS
+   ------------------------------------------------------------------------- */
+async function sendMessage(rawText) {
+  const text = (rawText != null ? rawText : $('#input').value).trim();
+  if (!text || state.isGenerating) return;
+
+  let chat = getActiveChat();
+  if (!chat) {
+    chat = createChat(state.activeModelId, text);
+    state.activeChatId = chat.id;
+  }
+
+  const userMsg = { id: uid(), role: 'user', content: text, timestamp: Date.now() };
+  chat.messages.push(userMsg);
+  chat.updatedAt = Date.now();
+  if (chat.messages.filter(m => m.role === 'user').length === 1) chat.title = truncate(text, 48);
+  saveChats();
+
+  $('#input').value = '';
+  autoResizeInput();
+  updateSendState();
+
+  const model = getModel(state.activeModelId);
+  if (!$('#messages')) {
+    renderChat();
+  } else {
+    const messagesEl = $('#messages');
+    messagesEl.appendChild(buildMessageEl(userMsg, model));
+    renderSidebar();
+    if (isNearBottom()) scrollToBottom();
+  }
+
+  state.isGenerating = true;
+  updateSendState();
+  showTyping();
+
+  try {
+    const reply = await callAI(state.activeModelId, chat.messages);
+    hideTyping();
+    const aiMsg = {
+      id: uid(), role: 'ai',
+      content: reply,
+      timestamp: Date.now(),
+      modelId: state.activeModelId,
+    };
+    chat.messages.push(aiMsg);
+    chat.updatedAt = Date.now();
+    saveChats();
+
+    const messagesEl = $('#messages');
+    if (messagesEl) {
+      const shouldScroll = isNearBottom();
+      messagesEl.appendChild(buildMessageEl(aiMsg, model));
+      renderSidebar();
+      if (shouldScroll) scrollToBottom();
+    }
+  } catch (err) {
+    hideTyping();
+    console.error('AI klaida:', err);
+    const errMsg = {
+      id: uid(), role: 'ai',
+      content: `**Klaida generuojant atsakymą.**\n\n\`${err.message}\`\n\nPatikrink Nustatymuose:\n- ar teisingas API raktas (OpenRouter),\n- ar modelis egzistuoja ir turi prieigą,\n- ar paleistas Ollama (jei naudoji vietinį režimą).\n\nGali perjungti į **Demo režimą** Nustatymuose, kad išbandytum sąsają be API.`,
+      timestamp: Date.now(),
+      modelId: state.activeModelId,
+    };
+    chat.messages.push(errMsg);
+    chat.updatedAt = Date.now();
+    saveChats();
+    const messagesEl = $('#messages');
+    if (messagesEl) messagesEl.appendChild(buildMessageEl(errMsg, model));
+    showToast('AI klaida: ' + err.message.slice(0, 100), 'error');
+  } finally {
+    state.isGenerating = false;
+    updateSendState();
+    $('#input').focus();
+  }
+}
+
+function showTyping() {
+  const model = getModel(state.activeModelId);
+  const messagesEl = $('#messages');
+  if (!messagesEl) return;
+  const el = document.createElement('div');
+  el.className = 'msg ai typing';
+  el.id = 'typingIndicator';
+  el.innerHTML = `
+    <div class="msg-avatar" style="background:${model.gradient}">${escapeHtml(model.avatar)}</div>
+    <div class="msg-body">
+      <div class="msg-head"><b>${escapeHtml(model.name)}</b></div>
+      <div class="msg-content"><i></i><i></i><i></i></div>
+    </div>
+  `;
+  messagesEl.appendChild(el);
+  if (isNearBottom()) scrollToBottom();
+}
+function hideTyping() { const el = $('#typingIndicator'); if (el) el.remove(); }
+
+async function regenerateMessage(messageId) {
+  if (state.isGenerating) return;
+  const chat = getActiveChat();
+  if (!chat) return;
+  const idx = chat.messages.findIndex(m => m.id === messageId);
+  if (idx < 1) return;
+  const aiMsg = chat.messages[idx];
+  const prevMsg = chat.messages[idx - 1];
+  if (aiMsg.role !== 'ai' || prevMsg.role !== 'user') return;
+
+  state.isGenerating = true;
+  updateSendState();
+  const oldContent = aiMsg.content;
+  aiMsg.content = '*(generuojama iš naujo...)*';
+  const msgEl = document.querySelector(`[data-msg-id="${messageId}"]`);
+  if (msgEl) {
+    const model = getModel(aiMsg.modelId || state.activeModelId);
+    msgEl.replaceWith(buildMessageEl(aiMsg, model));
+  }
+
+  try {
+    const reply = await callAI(aiMsg.modelId || state.activeModelId, chat.messages.slice(0, idx));
+    aiMsg.content = reply;
+    aiMsg.timestamp = Date.now();
+    chat.updatedAt = Date.now();
+    saveChats();
+  } catch (err) {
+    aiMsg.content = oldContent + `\n\n**Klaida generuojant iš naujo:** \`${err.message}\``;
+    showToast('Nepavyko pergeneruoti', 'error');
+  } finally {
+    state.isGenerating = false;
+    updateSendState();
+    const msgEl2 = document.querySelector(`[data-msg-id="${messageId}"]`);
+    if (msgEl2) {
+      const model = getModel(aiMsg.modelId || state.activeModelId);
+      msgEl2.replaceWith(buildMessageEl(aiMsg, model));
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------
+   15. KOPIJAVIMAS
+   ------------------------------------------------------------------------- */
+async function copyToClipboard(text, successMsg = 'Nukopijuota') {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    }
+    showToast(successMsg, 'success');
+  } catch { showToast('Nepavyko nukopijuoti', 'error'); }
+}
+
+/* -------------------------------------------------------------------------
+   16. ĮVESTIS
+   ------------------------------------------------------------------------- */
+function autoResizeInput() {
+  const input = $('#input');
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+}
+function updateSendState() {
+  const input = $('#input');
+  const sendBtn = $('#sendBtn');
+  const clearBtn = $('#clearBtn');
+  const hasText = input.value.trim().length > 0;
+  if (state.isGenerating) {
+    sendBtn.disabled = true;
+    sendBtn.classList.add('busy');
+  } else {
+    sendBtn.disabled = !hasText;
+    sendBtn.classList.remove('busy');
+  }
+  clearBtn.classList.toggle('visible', hasText && !state.isGenerating);
+}
+
+/* -------------------------------------------------------------------------
+   17. KONTEKSTINIS MENIU
+   ------------------------------------------------------------------------- */
+let contextMenuEl = null;
+function closeContextMenu() { if (contextMenuEl) { contextMenuEl.remove(); contextMenuEl = null; } }
+
+function showChatContextMenu(x, y, chat) {
+  closeContextMenu();
+  const menu = document.createElement('div');
+  menu.className = 'context-menu';
+  menu.innerHTML = `
+    <button data-ctx="rename">${icon('pencil', 14)} Pervadinti</button>
+    <button data-ctx="delete" class="danger">${icon('trash', 14)} Ištrinti</button>
+  `;
+  document.body.appendChild(menu);
+  contextMenuEl = menu;
+
+  const rect = menu.getBoundingClientRect();
+  let px = x - rect.width;
+  let py = y + 4;
+  if (px < 8) px = x + 4;
+  if (py + rect.height > window.innerHeight - 8) py = y - rect.height - 4;
+  menu.style.left = px + 'px';
+  menu.style.top = py + 'px';
+
+  menu.querySelector('[data-ctx="rename"]').addEventListener('click', async () => {
+    closeContextMenu();
+    const nt = await promptDialog({ title: 'Pervadinti pokalbį', subtitle: 'Įvesk naują pavadinimą', defaultValue: chat.title });
+    if (nt) { renameChat(chat.id, nt); renderSidebar(); showToast('Pokalbis pervadintas', 'success'); }
+  });
+  menu.querySelector('[data-ctx="delete"]').addEventListener('click', async () => {
+    closeContextMenu();
+    const ok = await confirmDialog({
+      title: 'Ištrinti pokalbį?',
+      message: `„${chat.title}“ bus negrįžtamai pašalintas.`,
+      confirmLabel: 'Ištrinti', danger: true,
+    });
+    if (ok) { deleteChat(chat.id); renderSidebar(); renderChat(); showToast('Pokalbis ištrintas', 'success'); }
+  });
+
+  setTimeout(() => {
+    document.addEventListener('click', closeContextMenu, { once: true });
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { closeContextMenu(); document.removeEventListener('keydown', esc); }
+    });
+  }, 0);
+}
+
+/* -------------------------------------------------------------------------
+   18. GLOBALUS RENDER
+   ------------------------------------------------------------------------- */
+function renderAll() {
+  $('#app').classList.toggle('sidebar-collapsed', state.settings.sidebarCollapsed);
+  applyModelAccent(getModel(state.activeModelId));
+  updateTopbar();
+  updateProviderPill();
+  renderSidebar();
+  renderChat();
+  updateSendState();
+}
+
+/* -------------------------------------------------------------------------
+   19. SEED DEMO
+   ------------------------------------------------------------------------- */
+function seedDemoData() {
+  if (localStorage.getItem(STORAGE.seeded)) return;
+  localStorage.setItem(STORAGE.seeded, '1');
+  const chat = {
+    id: uid(), modelId: 'atlas',
+    title: 'Pitagoro teorema',
+    messages: [
+      { id: uid(), role: 'user', content: 'Paaiškink Pitagoro teoremą', timestamp: Date.now() - 1000 * 60 * 8 },
+      { id: uid(), role: 'ai',
+        content: 'Puikus klausimas! **Pitagoro teorema** teigia, kad stačiojo trikampio įžambinės kvadratas lygus kitų dviejų kraštinių kvadratų sumai.\n\nFormulė:\n\n$$a^2 + b^2 = c^2$$\n\nČia `c` – įžambinė (ilgiausia kraštinė), o `a` ir `b` – statiniai.\n\nPavyzdys: jei `a = 3` ir `b = 4`, tai `c² = 9 + 16 = 25`, vadinasi `c = 5`.\n\nNori parodyti, kaip tai įrodyti?',
+        timestamp: Date.now() - 1000 * 60 * 7.5, modelId: 'atlas' },
+    ],
+    createdAt: Date.now() - 1000 * 60 * 8,
+    updatedAt: Date.now() - 1000 * 60 * 7.5,
+  };
+  state.chats.push(chat);
+  saveChats();
+}
+
+/* -------------------------------------------------------------------------
+   20. INIT
+   ------------------------------------------------------------------------- */
+function init() {
+  loadState();
+  seedDemoData();
+
+  applyTheme();
+  applyReducedMotion();
+  document.documentElement.setAttribute('data-theme', state.settings.theme);
+
+  if (!MODELS[state.activeModelId]) state.activeModelId = 'atlas';
+  const chats = getChatsForModel(state.activeModelId);
+  state.activeChatId = chats.length ? chats[0].id : null;
+
+  renderAll();
+
+  // Sidebar collapse (mygtukas LIEKA matomas abiem būsenomis)
+  $('#sidebarCollapse').addEventListener('click', () => {
+    state.settings.sidebarCollapsed = !state.settings.sidebarCollapsed;
+    $('#app').classList.toggle('sidebar-collapsed', state.settings.sidebarCollapsed);
+    saveSettings();
+  });
+
+  // Mobile sidebar
+  $('#mobileMenuBtn').addEventListener('click', () => {
+    $('#app').classList.add('mobile-sidebar-open');
+  });
+  $('#overlay').addEventListener('click', () => {
+    $('#app').classList.remove('mobile-sidebar-open');
+  });
+
+  // New chat
+  $('#newChatBtn').addEventListener('click', newChat);
+
+  // Search
+  $('#chatSearch').addEventListener('input', (e) => {
+    state.searchQuery = e.target.value.trim();
+    renderSidebar();
+  });
+
+  // Theme
+  $('#themeToggle').addEventListener('click', toggleTheme);
+
+  // Settings
+  $('#settingsBtn').addEventListener('click', openSettings);
+
+  // Input
+  const input = $('#input');
+  input.addEventListener('input', () => { autoResizeInput(); updateSendState(); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  $('#sendBtn').addEventListener('click', () => sendMessage());
+  $('#clearBtn').addEventListener('click', () => {
+    input.value = ''; autoResizeInput(); updateSendState(); input.focus();
+  });
+
+  // Global shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      $('#app').classList.remove('mobile-sidebar-open');
+      closeContextMenu();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      if (!state.settings.sidebarCollapsed) $('#chatSearch').focus();
+      else $('#input').focus();
+    }
+  });
+
+  // First-time warning about the leaked API key
+  const warnedKey = localStorage.getItem('aitutor.warnedKey');
+  if (!warnedKey && state.settings.apiKey === DEFAULT_API_KEY) {
+    localStorage.setItem('aitutor.warnedKey', '1');
+    setTimeout(() => {
+      showToast('⚠️ Naudojamas viešas demo raktas. Atšauk jį ir įklijuok savo per Nustatymus.', 'error');
+    }, 1200);
+  }
+
+  setTimeout(() => input.focus(), 100);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
