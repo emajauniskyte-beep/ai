@@ -1,0 +1,23 @@
+pridek daugiau animaciju musu robotui tiesog daugiau animaciju kad atrodytu gyvesnis ir malonesnis. Taipat pridek kad gali nussiusti nuotraukas ir tau ispres uzduotis jei paprasysi, padaryk gera taxo detectiona ir jeigu pvz bloga nuotruka susiliejusi ar tt praso atsiusti is naujo. Padaryk pilna koda, jkiu snippetu. Taipat pagerink kad daug geriau atrodytu ant mobile ir placeciu. Pridek daug optimizaciju, taipat roboto balsa (cia butu merginos balsas) gali naudoti : {
+
+`  "model": "fish-audio/s2.1-pro-free:free",`
+`"input": "The warm light flows across the OpenRouter office as the evening settles in and the routing never stops. One interface, hundreds of models. Ready when you are.",`
+`"voice": "b347db033a6549378b48d00acb0d06cd",`
+`"response_format": "mp3"`
+`} sitas yra uz dyka.`taipat jeigu reikia nzn gali nedeti gali naudoti. Taipat pridek : 1.1. Sokratiškas režimas 🟡
+Vietoj atsakymo davimo — veda mokinį klausimais: „Ką jau žinai apie šią formulę?" → „Kurį kintamąjį nori rasti?" → „Ką gautum, jei įstatytum x=2?"
+
+* Implementacija: perjungiklis prie input'o („Atsakymas" / „Sokratiškas"), keičia `systemPrompt` dinamiškai.
+* Bonusas: kai mokinys pasiduoda — atskleidžia sprendimą po 5 bandymų.
+
+
+1.2. Paaiškinimo lygis 🟢
+Vienas mygtukas: 5 kl. / vidurinė / universitetas. Prideda prie prompt'o: „Paaiškink taip, lyg kalbėtum su 10-mečiu, vartok paprastus palyginimus".
+
+* Galima tą patį atsakymą pergeneruoti 3 lygiais — labai gera mokymosi priemonė.1.3. Žinių patikrinimas po temos 🟡
+Po ilgesnio paaiškinimo automatiškai pasiūlo: „Ar nori pasitikrinti? 3 klausimai." → sugeneruoja MCQ + trumpą atvirą klausimą → įvertina.
+   * Rezultatai → `state.quizzes[]`, gali rodyti progresą.2.2. Balso išvedimas visiems 🟢
+Mygtukas „Perskaityti" prie kiekvieno AI atsakymo. `speak()` jau yra, tik išimk `voice` sąlygą.2.4. Dokumento įkėlimas kontekstui 🟡
+PDF / TXT / MD → ištraukti tekstą (`pdf.js`) → pridėti prie `systemPrompt` kaip „Kontekstas".
+      * Puikiai tinka: „Štai mano konspektas, paaiškink nesuprantamą dalį." Taipat ant vega kai jis programuoja padaryk kad butu Syntax Highlighting and daugelio kalbu ir kad galetum lengvai parsiisusti ir nukopijuoti koda.4.2. Robo emocijos 🟢
+Pagal atsakymo turinį → keisk robotuko veidą: `data-state="happy" | "curious" | "surprised"`. Paprasta CSS klasė + regex (ar klausk modelio grąžinti `{mood: "happy"}`). Padaryk pilna coda be jokiu snipetu. Turi buti viskas pridek kas cia parasyta. Googlinkis kaip ka daryti kad nedarytum klaidu, nekeisk dizaino nebent labai reiketu.
