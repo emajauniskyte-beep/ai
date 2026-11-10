@@ -499,10 +499,38 @@ body{font-size:15px}
 @media (max-height:560px) and (max-width:900px){.robot-wrap{display:none}.voice-stage{flex-direction:row;flex-wrap:wrap;justify-content:center}}
 @media (orientation:landscape) and (max-height:480px){.composer{padding-top:4px}.tools{padding-bottom:4px}.input-hint{display:none}}
 html,body,.app,.main,.chat-area{max-width:100vw}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:radial-gradient(1200px 600px at 50% 0,rgba(139,92,246,.18),transparent 60%),#040404;font-family:var(--font-sans)}
+.login-card{width:100%;max-width:380px;padding:32px 28px;background:#0d0d0d;border:1px solid #1e1e1e;border-radius:20px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.7)}
+.login-logo{width:56px;height:56px;margin:0 auto 16px;display:grid;place-items:center;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:16px;color:#fff;font-size:24px;font-weight:700}
+.login-card h1{margin:0 0 6px;font-size:22px;font-weight:700;color:#fafafa}
+.login-sub{margin:0 0 22px;font-size:13px;color:#a3a3a3}
+.login-input{width:100%;height:44px;padding:0 14px;margin-bottom:10px;background:#0a0a0a;border:1.5px solid #1e1e1e;border-radius:10px;font-size:14px;color:#fafafa;font-family:inherit}
+.login-input:focus{outline:0;border-color:#8b5cf6}
+.login-error{min-height:18px;margin-bottom:8px;font-size:12px;color:#ef4444}
+.login-btn{width:100%;height:46px;background:#fafafa;color:#050505;border:0;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.login-btn:hover{background:#e5e5e5}
+.login-note{margin:14px 0 0;font-size:11px;color:#525252}
 </style>
 </head>
 <body>
-<div class="app" id="app">
+
+<!-- Login -->
+<div id="loginScreen" class="login-screen" hidden>
+  <div class="login-card">
+    <div class="login-logo">Σ</div>
+    <h1>Studio AI</h1>
+    <p class="login-sub">Prisijunkite prie mokymosi platformos</p>
+    <input type="text" id="loginUser" class="login-input" placeholder="Vartotojo vardas" autocomplete="username" maxlength="40">
+    <input type="password" id="loginPass" class="login-input" placeholder="Slaptažodis" autocomplete="current-password" maxlength="80">
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" id="loginBtn">Prisijungti</button>
+    <p class="login-note">Prisijungiama tik kartą — vėliau prisiminsime.</p>
+  </div>
+</div>
+
+<div class="app" id="app" hidden>
   <aside class="sidebar" aria-label="Šoninė navigacija">
     <div class="sidebar-header">
       <div class="brand">
@@ -636,14 +664,12 @@ html,body,.app,.main,.chat-area{max-width:100vw}
 
 <script>
 'use strict';
+
 /* =========================================================================
    STUDIO AI v5 — pilnas funkcionalumas
    ========================================================================= */
 
-/* ============ 1. KONFIGŪRACIJA ============
-   Įmontuotas raktas saugomas kaip Base64 (UTF-8) ir dekoduojamas paleidimo metu.
-   PASTABA: Base64 yra tik kodavimas, ne apsauga — bet kas, atidaręs šį failą, gali jį
-   atkoduoti. Raktą gali pakeisti Nustatymuose (tada naudojamas tavo įvestas). */
+/* ============ 1. KONFIGŪRACIJA ============ */
 const KEY_B64 = 'c2stb3ItdjEtMmZmZmQ1NDNlMTQyNTEyZDZmNjNmNDllZDA4ZTBlMzEzMTk1NzhhZjg1YzM1ZGI3ZWFmY2FmNmQ2ZDQxZDk5ZA==';
 function decodeBase64Utf8(b64) {
   try { return new TextDecoder('utf-8').decode(Uint8Array.from(atob(b64.trim()), c => c.charCodeAt(0))).trim(); }
@@ -669,7 +695,7 @@ const STORAGE = { chats: 'studioai.chats.v3', settings: 'studioai.settings.v4', 
 const LEVELS = {
   kid:    { label: '5 kl.',        prompt: 'Paaiškink taip, lyg kalbėtum su 10-mečiu (5 klasės mokiniu): vartok paprastus žodžius, trumpus sakinius ir palyginimus iš kasdienybės, venk sudėtingų terminų.' },
   school: { label: 'Vidurinė',     prompt: 'Paaiškink vidurinės mokyklos mokiniui: aiškiai, žingsnis po žingsnio, su pagrindiniais terminais ir pavyzdžiais.' },
-  uni:    { label: 'Universitetas', prompt: 'Paaiškink universiteto lygiu: tiksliai, su formalia terminologija, išvedimais ar įrodymų užuominomis ten, kur tinka.' },
+  uni:    { label: 'Universitetas', prompt: 'Paaiškink universiteto lygiu: tiksliai, su formaliąja terminologija, išvedimais ar įrodymų užuominomis ten, kur tinka.' },
 };
 
 /* ============ 2. IKONOS ============ */
@@ -748,7 +774,7 @@ const REVEAL_PROMPT = `
 
 ATSKLEIDIMAS: mokinys pasidavė arba išnaudojo 5 bandymus. Dabar pateik pilną sprendimą žingsnis po žingsnio ir trumpai paaiškink kiekvieną žingsnį. Pabaigoje pasiūlyk panašų uždavinį pasitreniruoti.`;
 
-/* Robo demo variklis (kai nėra API rakto / pasirinktas Demo). */
+/* Robo demo variklis */
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const ROBO_RULES = [
   [/\b(labas|sveiki|sveikas|labutis|ei|hej|hello|hi)\b/, ['Labas! Aš Robo, tavo kalbanti draugė. Apie ką šiandien pakalbėsim?', 'Sveikas! Smagu tave girdėti. Kaip sekasi?']],
@@ -852,7 +878,7 @@ function latexToUnicode(latex) {
   return s.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
 }
 
-/* ============ 5. SINTAKSĖS ŠVIESIMAS (be išorinių bibliotekų) ============ */
+/* ============ 5. SINTAKSĖS ŠVIESIMAS ============ */
 const LANG_ALIAS = {js:'js',javascript:'js',jsx:'js',ts:'js',typescript:'js',tsx:'js',mjs:'js',node:'js',py:'py',python:'py',python3:'py',html:'html',xml:'html',svg:'html',vue:'html',css:'css',scss:'css',less:'css',json:'json',bash:'sh',sh:'sh',shell:'sh',zsh:'sh',powershell:'sh',ps1:'sh',java:'c',c:'c',cpp:'c','c++':'c',cs:'c',csharp:'c',go:'c',golang:'c',rust:'c',rs:'c',kotlin:'c',kt:'c',swift:'c',dart:'c',php:'c',scala:'c',sql:'sql',ruby:'rb',rb:'rb',yaml:'yaml',yml:'yaml'};
 const FILE_EXT = {js:'js',javascript:'js',jsx:'jsx',ts:'ts',typescript:'ts',tsx:'tsx',py:'py',python:'py',python3:'py',html:'html',css:'css',scss:'scss',json:'json',bash:'sh',sh:'sh',shell:'sh',java:'java',c:'c',cpp:'cpp','c++':'cpp',cs:'cs',csharp:'cs',go:'go',rust:'rs',rs:'rs',kotlin:'kt',kt:'kt',swift:'swift',php:'php',sql:'sql',ruby:'rb',rb:'rb',yaml:'yml',yml:'yml',xml:'xml',md:'md',markdown:'md',dart:'dart',scala:'scala'};
 const KW = {
@@ -946,7 +972,7 @@ const state = {
   settings: { ...DEFAULT_SETTINGS }, isGenerating: false, controller: null, searchQuery: '',
   pending: { images: [] }, pendingDoc: null, renderLimit: 60,
 };
-const imageStore = new Map(); // pilnos raiškos nuotraukos tik atmintyje (id -> dataURL)
+const imageStore = new Map();
 const getApiKey = () => (state.settings.apiKey || '').trim() || BUILTIN_KEY;
 
 function loadState() {
@@ -1078,7 +1104,7 @@ function renderMarkdownRaw(text, streaming) {
     });
 }
 
-/* ============ 9. AI ATSAKYMO PARSINIMAS (nuotaika, bloga nuotrauka) ============ */
+/* ============ 9. AI ATSAKYMO PARSINIMAS ============ */
 function parseAI(raw) {
   let t = String(raw || ''), mood = null, bad = null;
   t = t.replace(/^\s*\[mood:\s*(\w+)\s*\]\s*/i, (m, g) => { mood = g.toLowerCase(); return ''; });
@@ -1110,7 +1136,6 @@ async function readError(res, name) {
 function authHeaders() {
   return { 'Authorization': `Bearer ${getApiKey()}`, 'Content-Type': 'application/json', 'HTTP-Referer': location.origin && location.origin !== 'null' ? location.origin : 'https://localhost', 'X-Title': 'Studio AI' };
 }
-/* opts: { onToken, signal, maxTokens } — be onToken grąžina visą atsakymą iš karto. */
 async function callOpenRouter(messages, modelName, opts = {}) {
   if (!getApiKey()) throw new Error('Trūksta OpenRouter API rakto. Įvesk jį Nustatymuose arba pasirink Demo režimą.');
   const ctrl = new AbortController();
@@ -1355,7 +1380,6 @@ function initRobot() {
     robot.typingTimer = setTimeout(() => { robot.typingTimer = 0; setLook(...robot.lookBase); }, 1100);
   });
   ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, wakeRobot, { passive: true }));
-  // atsitiktiniai mikro veiksmai, kad robotas atrodytų gyvas
   robot.idleTimer = setInterval(() => {
     if (!stageVisible() || stage().dataset.state !== 'idle' || stage().dataset.mood !== 'neutral') return;
     const a = pick(['look', 'look', 'wink', 'hop', 'ant', 'ear', 'smile']);
@@ -1383,7 +1407,7 @@ function updateVoiceToggle() {
   $('#voiceToggleTxt').textContent = on ? 'Balsas įjungtas' : 'Balsas išjungtas';
 }
 
-/* ============ 14. BALSAS: ATPAŽINIMAS + FISH AUDIO TTS ============ */
+/* ============ 14. BALSAS ============ */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
 const voice = { rec: null, listening: false, brVoice: null };
@@ -1548,7 +1572,7 @@ function toggleListening() {
   try { rec.start(); } catch { voice.listening = false; setRobot('idle'); }
 }
 
-/* ============ 15. NUOTRAUKOS: APDOROJIMAS IR KOKYBĖS DETEKTORIUS ============ */
+/* ============ 15. NUOTRAUKOS ============ */
 async function loadBitmap(file) {
   if ('createImageBitmap' in window) { try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch {} }
   return new Promise((res, rej) => {
@@ -1565,7 +1589,6 @@ function drawScaled(src, w, h, max) {
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch); ctx.drawImage(src, 0, 0, cw, ch);
   return { c, ctx, cw, ch };
 }
-/* Aptinka: susiliejimą (Laplaso dispersija), tamsą, persvietimą, mažą kontrastą, mažą raišką. */
 function analyzeQuality(src, w, h) {
   const { ctx, cw, ch } = drawScaled(src, w, h, 640);
   const px = ctx.getImageData(0, 0, cw, ch).data, n = cw * ch, g = new Float32Array(n);
@@ -1651,7 +1674,7 @@ async function confirmImagesOk(images) {
   }));
 }
 
-/* ============ 16. DOKUMENTAI (PDF / TXT / MD) ============ */
+/* ============ 16. DOKUMENTAI ============ */
 const DOC_LIMIT = 14000;
 async function readPdf(file) {
   if (!window.pdfjsLib) await loadScript(PDFJS_URL);
@@ -1687,7 +1710,7 @@ function removeDoc() {
   state.pendingDoc = null; renderTray();
 }
 
-/* ============ 17. PAKARTOJIMAS: SOKRATIŠKAS REŽIMAS IR LYGIAI ============ */
+/* ============ 17. SOKRATIŠKAS REŽIMAS ============ */
 function updateModeUi() {
   $$('#modeSeg button').forEach(b => b.classList.toggle('active', b.dataset.mode === state.settings.mode));
   $$('#levelSeg button').forEach(b => b.classList.toggle('active', b.dataset.level === state.settings.level));
@@ -1696,7 +1719,7 @@ function updateModeUi() {
   if (on) $('#socCount').textContent = `Bandymai ${chat.socCount || 0}/5`;
 }
 
-/* ============ 18. ŽINIŲ PATIKRINIMAS (QUIZ) ============ */
+/* ============ 18. ŽINIŲ PATIKRINIMAS ============ */
 const QUIZ_SYS = `Tu kuri žinių patikrinimą lietuvių kalba. Remdamasis pateiktu paaiškinimu sukurk 3 klausimus su pasirenkamais atsakymais (kiekvienas po 4 variantus, vienas teisingas) ir 1 trumpą atvirą klausimą. Matematiką rašyk Unicode simboliais. Grąžink TIK JSON be Markdown, tiksliai tokios formos: {"topic":"tema","mcq":[{"q":"klausimas","options":["A","B","C","D"],"answer":0,"explain":"trumpas paaiškinimas"}],"open":{"q":"atviras klausimas","ideal":"trumpas pavyzdinis atsakymas"}}`;
 const DEMO_QUIZ = { topic: 'Demo patikrinimas', mcq: [
   { q: 'Kiek yra 2 + 2 × 2?', options: ['6', '8', '4', '10'], answer: 0, explain: 'Pirmiausia daugyba: 2 × 2 = 4, tada 2 + 4 = 6.' },
@@ -2033,7 +2056,7 @@ function showTypingAfter(anchorEl) {
 }
 const hideTyping = () => $('#typingIndicator')?.remove();
 
-/* ============ 22. GENERAVIMAS (vieningas kelias: siuntimas, perkūrimas, lygių variantai) ============ */
+/* ============ 22. GENERAVIMAS ============ */
 async function runGeneration({ chat, model, history, anchorId = null, replaceId = null, levelOverride = null, variantLabel = null, extra = {} }) {
   state.isGenerating = true; state.controller = new AbortController(); updateSendState();
   const signal = state.controller.signal;
@@ -2230,7 +2253,7 @@ function updateSendState() {
   $('#micBtn').disabled = g;
 }
 
-/* ============ 25. ĮVYKIŲ DELEGAVIMAS (greitas — vienas klausytojas) ============ */
+/* ============ 25. ĮVYKIŲ DELEGAVIMAS ============ */
 function onChatClick(e) {
   const inner = $('#chatInner');
   const chat = getActiveChat();
@@ -2338,12 +2361,10 @@ function init() {
   });
   $('#speakStop').addEventListener('click', () => stopSpeaking());
 
-  // režimai, lygiai, Sokratas
   $('#modeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.settings.mode = b.dataset.mode; saveSettings(); updateModeUi(); showToast(b.dataset.mode === 'socratic' ? 'Sokratiškas režimas: vesiu klausimais' : 'Atsakymo režimas', 'info'); });
   $('#levelSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.settings.level = b.dataset.level; saveSettings(); updateModeUi(); });
   $('#giveUpBtn').addEventListener('click', () => sendMessage('Pasiduodu — parodyk sprendimą.', { giveUp: true }));
 
-  // priedai
   $('#imgBtn').addEventListener('click', () => $('#imgInput').click());
   $('#camBtn').addEventListener('click', () => $('#camInput').click());
   $('#docBtn').addEventListener('click', () => $('#docInput').click());
@@ -2390,7 +2411,73 @@ function init() {
   window.addEventListener('beforeunload', () => { stopSpeaking(true); flushSave(); });
   setTimeout(() => { if (!touchDevice() && !getModel(state.activeModelId).voice) input.focus(); }, 100);
 }
-document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
+
+/* ============ 27. LOGIN SISTEMA ============ */
+const LOGIN_KEY = 'studioai.auth.v1';
+const isAuthenticated = () => { try { return localStorage.getItem(LOGIN_KEY) === '1'; } catch { return false; } };
+function showLogin() {
+  const s = $('#loginScreen'); if (!s) return;
+  s.hidden = false;
+  const a = $('#app'); if (a) a.hidden = true;
+  setTimeout(() => $('#loginUser')?.focus(), 80);
+}
+function attemptLogin() {
+  const u = $('#loginUser').value.trim();
+  const p = $('#loginPass').value;
+  const err = $('#loginError');
+  if (!u || u.length < 2) { err.textContent = 'Įveskite vartotojo vardą (bent 2 simboliai)'; return; }
+  if (!p || p.length < 4) { err.textContent = 'Slaptažodis turi būti bent 4 simbolių'; return; }
+  try {
+    localStorage.setItem(LOGIN_KEY, '1');
+    localStorage.setItem('studioai.user', u);
+  } catch (e) { err.textContent = 'Nepavyko išsaugoti. Įjunkite localStorage.'; return; }
+  $('#loginScreen').hidden = true;
+  const a = $('#app'); if (a) a.hidden = false;
+  init();
+}
+function setupLogin() {
+  $('#loginBtn')?.addEventListener('click', attemptLogin);
+  $('#loginUser')?.addEventListener('keydown', e => { if (e.key === 'Enter') $('#loginPass').focus(); });
+  $('#loginPass')?.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+}
+
+/* ============ 28. ANTI-DEVTOOLS ============ */
+(function antiDevtools() {
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    const k = (e.key || '').toUpperCase();
+    if (k === 'F12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I','J','C','K'].includes(k)) || ((e.ctrlKey || e.metaKey) && k === 'U')) {
+      e.preventDefault(); e.stopPropagation(); return false;
+    }
+  }, true);
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) return;
+  setInterval(() => {
+    if (document.getElementById('devBlock')) return;
+    const w = window.outerWidth - window.innerWidth;
+    const h = window.outerHeight - window.innerHeight;
+    if (w > 350 || h > 350) {
+      const el = document.createElement('div');
+      el.id = 'devBlock';
+      el.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#000;color:#fff;display:grid;place-items:center;font-family:sans-serif;text-align:center;padding:24px';
+      el.innerHTML = '<div><h1 style="margin:0 0 12px">⚠ DevTools aptikti</h1><p style="color:#a3a3a3;max-width:400px;margin:0 auto">Uždarykite kūrėjo įrankius ir perkraukite puslapį.</p></div>';
+      document.body.appendChild(el);
+    }
+  }, 1000);
+})();
+
+/* ============ 29. PALEIDIMAS ============ */
+function boot() {
+  setupLogin();
+  if (isAuthenticated()) {
+    const l = $('#loginScreen'); if (l) l.hidden = true;
+    const a = $('#app'); if (a) a.hidden = false;
+    init();
+  } else {
+    showLogin();
+  }
+}
+document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', boot) : boot();
 
 </script>
 </body>
